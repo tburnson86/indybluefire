@@ -206,10 +206,12 @@
     <a href="index.html" class="back">← Site</a>
     <div class="logo">INDY <span>BLUEFIRE</span></div>
     <div class="htitle">Tournament Manager</div>
+    <div id="divBadge" style="display:none;font-family:var(--font-c);font-weight:700;font-size:.7rem;letter-spacing:.12em;background:var(--mid);color:var(--cyan);border:1px solid rgba(0,200,255,.3);padding:.28rem .8rem;"></div>
   </div>
   <div class="tabs">
     <button class="tab active" onclick="sv('pools')">Pool Play</button>
     <button class="tab" onclick="sv('bracket')">Bracket</button>
+    <button class="tab" onclick="printView()" style="border-color:rgba(255,216,77,.3);color:var(--warn);">🖨 Print</button>
   </div>
 </header>
 
@@ -247,6 +249,16 @@
       <select class="cfg-sel" id="cfgWin"><option value="2" selected>2 pts</option><option value="3">3 pts</option></select></div>
     <button class="btn btn-cyan btn-full" onclick="generate()">Generate Pools</button>
     <button class="btn btn-out btn-full" onclick="resetAll()">Reset Everything</button>
+  </div>
+
+  <div class="sb-sec">
+    <div class="sb-lbl">Division</div>
+    <div class="cfg-row">
+      <span class="cfg-lbl">Division name</span>
+      <input class="ti" id="divName" placeholder="e.g. AA Coed" style="font-size:.8rem;padding:.3rem .6rem;" onchange="onDivChange()"/>
+    </div>
+    <div id="divList" style="display:flex;flex-direction:column;gap:.3rem;margin-top:.4rem;"></div>
+    <button class="btn btn-out btn-full" style="margin-top:.4rem;" onclick="newDivision()">+ New Division</button>
   </div>
 
   <div class="sb-sec">
@@ -303,6 +315,29 @@ const fmt=()=>parseInt($('cfgFmt').value)||3;
 const need=()=>fmt()===3?2:1;
 const np2=n=>{let p=1;while(p<n)p*=2;return p;};
 const mkG=n=>Array.from({length:n},()=>({s1:null,s2:null,w:null}));
+
+// Head-to-head tiebreaker: returns 1 if teamA beat teamB, 2 if B beat A, 0 if no result
+function h2h(pool, nameA, nameB){
+  const m=pool.matches.find(m=>m.done&&((m.t1===nameA&&m.t2===nameB)||(m.t1===nameB&&m.t2===nameA)));
+  if(!m)return 0;
+  const w=swinner(m.games,need());
+  if(!w)return 0;
+  if(m.t1===nameA)return w===1?1:2;
+  return w===2?1:2;
+}
+
+// Full tiebreaker sort: pts → pointDiff → head-to-head → gameWins → name
+function poolSort(pool){
+  return [...pool.teams].sort((a,b)=>{
+    if(b.pts!==a.pts)return b.pts-a.pts;
+    if(b.diff!==a.diff)return b.diff-a.diff;
+    const hh=h2h(pool,a.name,b.name);
+    if(hh===1)return -1; // a beat b
+    if(hh===2)return 1;  // b beat a
+    if(b.gw!==a.gw)return b.gw-a.gw;
+    return a.name.localeCompare(b.name); // alphabetical last resort
+  });
+}
 const sw=(gs)=>{let w1=0,w2=0;gs.forEach(g=>{if(g.w===1)w1++;else if(g.w===2)w2++;});return{w1,w2};};
 const swinner=(gs,n)=>{const{w1,w2}=sw(gs);if(w1>=n)return 1;if(w2>=n)return 2;return null;};
 
@@ -423,7 +458,7 @@ function renderPools(){
   const adv=parseInt($('cfgAdv').value),n=need(),f=fmt();
 
   grid.innerHTML=S.pools.map((pool,pi)=>{
-    const sorted=[...pool.teams].sort((a,b)=>b.pts-a.pts||b.diff-a.diff||b.gw-a.gw);
+    const sorted=poolSort(pool);
     const stand=sorted.map((t,r)=>`<tr>
       <td><span class="prank">${r+1}</span><span class="${r<adv?'adv':''}">${t.name}</span>${r<adv?'<span style="font-size:.55rem;color:var(--success);margin-left:2px;">▲</span>':''}</td>
       <td class="tw">${t.w}</td><td class="tl">${t.l}</td><td class="tp">${t.pts}</td>
@@ -497,6 +532,11 @@ function pgame(pi,mi,gi,slot,val){
   const v=parseInt(val);
   if(slot===0)g.s1=isNaN(v)?null:v;else g.s2=isNaN(v)?null:v;
   if(g.s1!==null&&g.s2!==null&&g.s1!==g.s2)g.w=g.s1>g.s2?1:2;else g.w=null;
+  if(g.s1!==null&&g.s2!==null){
+    const hi=Math.max(g.s1,g.s2),target=sT();
+    if(hi<target-2&&g.s1!==g.s2)toast(`⚠ Score looks low — target is ${target}`);
+    if(hi>target+10)toast(`⚠ Score looks high — double check`);
+  }
   renderPools();
 }
 
@@ -534,7 +574,7 @@ function genBracket(){
   const adv=parseInt($('cfgAdv').value);
   const seeds=[];
   for(let r=0;r<adv;r++)S.pools.forEach(pool=>{
-    const s=[...pool.teams].sort((a,b)=>b.pts-a.pts||b.diff-a.diff||b.gw-a.gw);
+    const s=poolSort(pool);
     if(s[r])seeds.push(s[r].name);
   });
   const size=np2(seeds.length);
@@ -687,6 +727,13 @@ function umg(gi,slot,val){
   const g=S.mg[gi],v=parseInt(val);
   if(slot===0)g.s1=isNaN(v)?null:v;else g.s2=isNaN(v)?null:v;
   if(g.s1!==null&&g.s2!==null&&g.s1!==g.s2)g.w=g.s1>g.s2?1:2;else g.w=null;
+  // Sanity check: warn if score looks unusual
+  if(g.s1!==null&&g.s2!==null){
+    const target=sT(),hi=Math.max(g.s1,g.s2),lo=Math.min(g.s1,g.s2);
+    const win=swinner(S.mg,2);
+    if(hi<target-2&&g.s1!==g.s2) toast(`⚠ Score looks low — target is ${target}`);
+    if(hi>target+10) toast(`⚠ Score looks high — double check`);
+  }
   const{ri,mi}=S.modal,m=S.bracket[ri].matches[mi];
   renderMGames(m.t1,m.t2);
 }
@@ -712,9 +759,79 @@ function clearD(ri,mi,team){
 function closeModal(){$('moverlay').classList.remove('open');S.modal=null;}
 
 // ═══════════════════════════════════
+// DIVISION MANAGEMENT
+// ═══════════════════════════════════
+function onDivChange(){
+  updateDivBadge();
+  renderDivList();
+  // Load this division if it has saved data
+  const raw=localStorage.getItem(SAVE_KEY());
+  if(raw){
+    const savedAt=loadState();
+    if(savedAt){
+      renderTeams();renderPools();
+      if(S.bracketReady)renderBracket();
+      updateStats();updateCourts();
+      const el=$('autoSaveStatus');
+      const t=new Date(savedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      if(el){el.textContent=`✓ Loaded ${getDivName()} from ${t}`;el.style.color='var(--cyan)';}
+      toast(`Switched to ${getDivName()}`);
+    }
+  } else {
+    // New empty division
+    S.teams=[];S.pools=[];S.bracket=[];S.courts={};S.bracketReady=false;
+    renderTeams();renderPools();
+    $('bouter').innerHTML='<div class="empty"><div class="ei">🏆</div><div class="et">Bracket Not Ready</div><div class="es">Complete pool play first.</div></div>';
+    updateStats();
+    const el=$('autoSaveStatus');if(el){el.textContent='New division — not yet saved';el.style.color='var(--gray)';}
+  }
+}
+
+function getDivName(){
+  const v=($('divName')||{}).value||'';
+  return v.trim()||'Default';
+}
+
+function updateDivBadge(){
+  const b=$('divBadge');if(!b)return;
+  const name=getDivName();
+  if(name&&name!=='Default'){b.textContent=name;b.style.display='block';}
+  else b.style.display='none';
+}
+
+function renderDivList(){
+  const el=$('divList');if(!el)return;
+  const keys=allSaveKeys();
+  if(!keys.length){el.innerHTML='<div style="font-family:var(--font-c);font-size:.65rem;color:var(--gray);">No saved divisions yet.</div>';return;}
+  el.innerHTML=keys.map(k=>{
+    const raw=localStorage.getItem(k);
+    let label=k.replace('indybluefire_tournament_','').replace(/_/g,' ');
+    let teams=0;try{const d=JSON.parse(raw);teams=d.teams?.length||0;}catch(e){}
+    const active=k===SAVE_KEY();
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.3rem .6rem;background:${active?'rgba(0,200,255,.08)':'rgba(0,0,0,.15)'};border:1px solid ${active?'rgba(0,200,255,.25)':'rgba(255,255,255,.05)'};">
+      <span style="font-family:var(--font-c);font-size:.75rem;font-weight:700;color:${active?'var(--cyan)':'var(--white)'};">${label}</span>
+      <span style="font-family:var(--font-c);font-size:.62rem;color:var(--gray);">${teams} teams</span>
+    </div>`;
+  }).join('');
+}
+
+function newDivision(){
+  const name=prompt('Enter division name (e.g. "A Coed", "BB Sand"):');
+  if(!name||!name.trim())return;
+  const inp=$('divName');if(inp)inp.value=name.trim();
+  onDivChange();
+}
+
+// ═══════════════════════════════════
 // SAVE / LOAD
 // ═══════════════════════════════════
-const SAVE_KEY = 'indybluefire_tournament';
+const SAVE_KEY = ()=>{
+  const d=($('divName')||{}).value||'default';
+  return `indybluefire_tournament_${d.trim().toLowerCase().replace(/\s+/g,'_')||'default'}`;
+};
+function allSaveKeys(){
+  return Object.keys(localStorage).filter(k=>k.startsWith('indybluefire_tournament_'));
+}
 
 function saveState(){
   try {
@@ -732,14 +849,14 @@ function saveState(){
       cfgWin: $('cfgWin').value,
       cfgCourts: $('cfgCourts').value,
     };
-    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    localStorage.setItem(SAVE_KEY(), JSON.stringify(data));
     showSaveStatus();
   } catch(e) { console.warn('Save failed', e); }
 }
 
 function loadState(){
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = localStorage.getItem(SAVE_KEY());
     if(!raw) return false;
     const data = JSON.parse(raw);
     S.teams = data.teams || [];
@@ -814,7 +931,7 @@ function importJSON(e){
 
 function clearSave(){
   if(!confirm('Clear all saved data? This cannot be undone.')) return;
-  localStorage.removeItem(SAVE_KEY);
+  localStorage.removeItem(SAVE_KEY());
   const el = $('autoSaveStatus');
   if(el){ el.textContent = 'Save cleared'; el.style.color = 'var(--gray)'; }
   toast('Saved data cleared');
@@ -840,9 +957,126 @@ function resetAll(){
   if(!confirm('Reset everything?'))return;
   S.pools=[];S.bracket=[];S.bracketReady=false;S.courts={};
   renderPools();$('bouter').innerHTML='<div class="empty"><div class="ei">🏆</div><div class="et">Bracket Not Ready</div><div class="es">Complete pool play first.</div></div>';
-  localStorage.removeItem(SAVE_KEY);updateStats();toast('Reset!');
+  localStorage.removeItem(SAVE_KEY());updateStats();toast('Reset!');
 }
 let tT;function toast(msg){const e=$('toast');e.textContent=msg;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),2600);}
+// ═══════════════════════════════════
+// PRINT VIEW
+// ═══════════════════════════════════
+function printView(){
+  const divName = getDivName();
+  const date = new Date().toLocaleDateString();
+
+  // Build print-friendly bracket HTML
+  let bracketHtml = '';
+  if(S.bracketReady && S.bracket.length){
+    S.bracket.forEach(round=>{
+      bracketHtml += `<div class="pr-round">
+        <div class="pr-round-name">${round.name}</div>`;
+      round.matches.forEach(m=>{
+        const{w1,w2}=sw(m.games);
+        const winner=m.winner;
+        bracketHtml += `<div class="pr-match ${m.done?'done':''}">
+          <div class="pr-slot ${winner===m.t1?'win':''}">${m.t1||'TBD'}<span class="pr-score">${w1>0?w1:''}</span></div>
+          <div class="pr-slot ${winner===m.t2?'win':''}">${m.t2||'TBD'}<span class="pr-score">${w2>0?w2:''}</span></div>
+        </div>`;
+      });
+      bracketHtml += `</div>`;
+    });
+    const champ = S.bracket[S.bracket.length-1]?.matches[0]?.winner;
+    bracketHtml += `<div class="pr-round"><div class="pr-round-name">🏆 Champion</div>
+      <div class="pr-champ">${champ||'TBD'}</div></div>`;
+  }
+
+  // Build pool standings for print
+  let poolsHtml = '';
+  S.pools.forEach(pool=>{
+    const sorted=poolSort(pool);
+    const adv=parseInt($('cfgAdv').value);
+    poolsHtml += `<div class="pr-pool">
+      <div class="pr-pool-name">${pool.name}</div>
+      <table class="pr-tbl">
+        <thead><tr><th>#</th><th>Team</th><th>W</th><th>L</th><th>PTS</th><th>+/-</th></tr></thead>
+        <tbody>${sorted.map((t,i)=>`<tr class="${i<adv?'adv':''}">
+          <td>${i+1}</td><td>${t.name}${i<adv?' ▲':''}</td>
+          <td>${t.w}</td><td>${t.l}</td><td>${t.pts}</td><td>${t.diff>0?'+':''}${t.diff}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  });
+
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head>
+    <title>Indy Bluefire — ${divName} — ${date}</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{font-family:'Arial Narrow',Arial,sans-serif;background:#fff;color:#000;padding:20px;}
+      h1{font-size:22px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+      .meta{font-size:11px;color:#666;letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;}
+      .section-title{font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+        border-bottom:2px solid #000;padding-bottom:4px;margin:20px 0 12px;}
+
+      /* POOLS */
+      .pools-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px;}
+      .pr-pool{border:1px solid #ddd;break-inside:avoid;}
+      .pr-pool-name{background:#000;color:#fff;font-size:12px;font-weight:700;letter-spacing:2px;
+        text-transform:uppercase;padding:5px 10px;}
+      .pr-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+      .pr-tbl th{background:#f0f0f0;padding:3px 6px;text-align:left;font-weight:700;font-size:10px;letter-spacing:1px;}
+      .pr-tbl td{padding:3px 6px;border-top:1px solid #eee;}
+      .pr-tbl tr.adv td{color:#007700;font-weight:700;}
+
+      /* BRACKET */
+      .bracket-wrap{display:flex;gap:0;align-items:flex-start;overflow:visible;}
+      .pr-round{min-width:150px;margin-right:30px;}
+      .pr-round-name{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+        border-bottom:1px solid #000;padding-bottom:4px;margin-bottom:8px;text-align:center;}
+      .pr-match{border:1px solid #ccc;margin-bottom:8px;break-inside:avoid;}
+      .pr-match.done{border-color:#000;}
+      .pr-slot{display:flex;justify-content:space-between;padding:5px 8px;font-size:11px;
+        border-bottom:1px solid #eee;min-height:24px;align-items:center;}
+      .pr-slot:last-child{border-bottom:none;}
+      .pr-slot.win{font-weight:700;background:#f8fff8;}
+      .pr-score{font-weight:900;font-size:13px;}
+      .pr-champ{border:2px solid #000;padding:12px;font-size:16px;font-weight:900;
+        text-align:center;letter-spacing:1px;text-transform:uppercase;}
+
+      /* COURT SCHEDULE */
+      .court-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+      .court-box{border:1px solid #ccc;padding:8px;}
+      .court-num{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+        border-bottom:1px solid #eee;margin-bottom:6px;padding-bottom:4px;}
+      .court-match{font-size:10px;padding:2px 0;border-bottom:1px solid #f5f5f5;}
+
+      @media print{
+        body{padding:10px;}
+        button{display:none;}
+        @page{margin:15mm;}
+      }
+    </style>
+  </head><body>
+    <h1>Indy Bluefire Volleyball</h1>
+    <div class="meta">${divName} Division &nbsp;·&nbsp; ${date} &nbsp;·&nbsp; ${S.teams.length} Teams &nbsp;·&nbsp; ${S.pools.length} Pools</div>
+    <button onclick="window.print()" style="padding:8px 20px;background:#000;color:#fff;border:none;cursor:pointer;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">Print / Save PDF</button>
+
+    ${poolsHtml ? `<div class="section-title">Pool Standings</div><div class="pools-wrap">${poolsHtml}</div>` : ''}
+    ${bracketHtml ? `<div class="section-title">Tournament Bracket</div><div class="bracket-wrap">${bracketHtml}</div>` : ''}
+
+    ${Object.keys(S.courts).length ? `
+    <div class="section-title">Court Assignments</div>
+    <div class="court-grid">
+      ${Array.from({length:nC()},(_,i)=>{
+        const entries=Object.entries(S.courts).filter(([k,v])=>v&&v.court==i+1);
+        return `<div class="court-box">
+          <div class="court-num">Court ${i+1}</div>
+          ${entries.length?entries.map(([k,v])=>`<div class="court-match">${v.label}</div>`).join(''):'<div style="font-size:10px;color:#999;">Available</div>'}
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+  </body></html>`);
+  win.document.close();
+}
+
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&S.modal&&$('moverlay').classList.contains('open'))submitBracket();});
 $('moverlay').addEventListener('click',e=>{if(e.target===$('moverlay'))closeModal();});
 // Restore saved state on load
@@ -859,7 +1093,7 @@ $('moverlay').addEventListener('click',e=>{if(e.target===$('moverlay'))closeModa
     toast('Tournament restored from last save');
   }
 })();
-updateStats();updateCourts();
+updateStats();updateCourts();updateDivBadge();renderDivList();
 document.getElementById('autoAssign').addEventListener('change',function(){
   document.getElementById('autoLbl').textContent=this.checked?'On':'Off';
   document.getElementById('autoLbl').style.color=this.checked?'var(--cyan)':'var(--gray)';
