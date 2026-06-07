@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Indy Bluefire — Tournament Bracket</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --navy:    #030b1a;
+      --dark:    #050d1e;
+      --mid:     #0a1f4e;
+      --blue:    #0047ff;
+      --cyan:    #00c8ff;
+      --cyan2:   #00eaff;
+      --white:   #f0f6ff;
+      --gray:    #7a8faa;
+      --success: #00e676;
+      --warn:    #ffd84d;
+      --font-d:  'Bebas Neue', sans-serif;
+      --font-c:  'Barlow Condensed', sans-serif;
+      --font-b:  'Barlow', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--navy);
+      color: var(--white);
+      font-family: var(--font-b);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid rgba(0,200,255,0.12);
+      background: rgba(3,11,26,0.95);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-family: var(--font-d);
+      font-size: 1.4rem;
+      letter-spacing: 0.08em;
+      color: var(--white);
+    }
+    .logo span { color: var(--cyan); }
+    .header-title {
+      font-family: var(--font-c);
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+    .phase-tabs {
+      display: flex;
+      gap: 2px;
+    }
+    .phase-tab {
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.5rem 1.2rem;
+      background: transparent;
+      color: var(--gray);
+      border: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .phase-tab.active {
+      background: var(--cyan);
+      color: var(--navy);
+      border-color: var(--cyan);
+    }
+    .phase-tab:hover:not(.active) { border-color: var(--cyan); color: var(--cyan); }
+
+    /* ── MAIN LAYOUT ── */
+    .app {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: calc(100vh - 57px);
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--dark);
+      border-right: 1px solid rgba(0,200,255,0.08);
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    .sidebar-section {
+      margin-bottom: 2rem;
+    }
+    .sidebar-label {
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .sidebar-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(0,200,255,0.15);
+    }
+
+    /* Team input */
+    .team-input-wrap {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.8rem;
+    }
+    .team-input {
+      flex: 1;
+      background: rgba(0,200,255,0.04);
+      border: 1px solid rgba(0,200,255,0.15);
+      color: var(--white);
+      font-family: var(--font-c);
+      font-size: 0.9rem;
+      padding: 0.55rem 0.8rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .team-input:focus { border-color: var(--cyan); }
+    .team-input::placeholder { color: var(--gray); }
+    .btn {
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.55rem 1rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-cyan { background: var(--cyan); color: var(--navy); }
+    .btn-cyan:hover { background: var(--cyan2); }
+    .btn-outline {
+      background: transparent;
+      color: var(--gray);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .btn-outline:hover { border-color: var(--cyan); color: var(--cyan); }
+    .btn-danger {
+      background: transparent;
+      color: #ff4444;
+      border: 1px solid rgba(255,68,68,0.2);
+      padding: 0.3rem 0.6rem;
+      font-size: 0.65rem;
+    }
+    .btn-danger:hover { background: rgba(255,68,68,0.1); }
+    .btn-success { background: var(--success); color: var(--navy); }
+    .btn-success:hover { filter: brightness(1.1); }
+    .btn-full { width: 100%; margin-top: 0.5rem; }
+
+    /* Team list */
+    .team-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .team-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0,200,255,0.04);
+      border: 1px solid rgba(0,200,255,0.08);
+      padding: 0.5rem 0.8rem;
+      transition: border-color 0.2s;
+    }
+    .team-item:hover { border-color: rgba(0,200,255,0.2); }
+    .team-item-name {
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 0.88rem;
+      letter-spacing: 0.04em;
+    }
+    .team-seed {
+      font-family: var(--font-c);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--cyan);
+      opacity: 0.7;
+    }
+
+    /* Pool config */
+    .config-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+    }
+    .config-label {
+      font-family: var(--font-c);
+      font-size: 0.82rem;
+      color: var(--gray);
+    }
+    .config-select {
+      background: rgba(0,200,255,0.04);
+      border: 1px solid rgba(0,200,255,0.15);
+      color: var(--white);
+      font-family: var(--font-c);
+      font-size: 0.82rem;
+      padding: 0.3rem 0.6rem;
+      outline: none;
+    }
+    .config-select option { background: var(--dark); }
+
+    /* Stats bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: rgba(0,200,255,0.08);
+      margin-bottom: 1.5rem;
+    }
+    .stat-cell {
+      background: var(--dark);
+      padding: 0.8rem;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: var(--font-d);
+      font-size: 1.8rem;
+      color: var(--cyan);
+      line-height: 1;
+    }
+    .stat-lbl {
+      font-family: var(--font-c);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-top: 0.2rem;
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main {
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+
+    /* ── POOL PLAY VIEW ── */
+    #view-pools { display: block; }
+    #view-bracket { display: none; }
+
+    .pools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .pool-card {
+      background: var(--dark);
+      border: 1px solid rgba(0,200,255,0.08);
+    }
+    .pool-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.8rem 1.2rem;
+      border-bottom: 1px solid rgba(0,200,255,0.08);
+      background: rgba(0,200,255,0.04);
+    }
+    .pool-name {
+      font-family: var(--font-d);
+      font-size: 1.3rem;
+      letter-spacing: 0.06em;
+      color: var(--cyan);
+    }
+    .pool-record-head {
+      font-family: var(--font-c);
+      font-size: 0.62rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+
+    /* Pool standings table */
+    .pool-table { width: 100%; }
+    .pool-table th {
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 0.6rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gray);
+      padding: 0.5rem 1.2rem;
+      text-align: left;
+    }
+    .pool-table th:not(:first-child) { text-align: center; }
+    .pool-table td {
+      padding: 0.5rem 1.2rem;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      font-family: var(--font-c);
+      font-size: 0.88rem;
+    }
+    .pool-table td:not(:first-child) { text-align: center; }
+    .pool-rank {
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 0.7rem;
+      color: var(--gray);
+      margin-right: 0.5rem;
+    }
+    .pool-team-name { font-weight: 700; }
+    .advancing { color: var(--success); }
+    .td-w { color: var(--success); font-weight: 700; }
+    .td-l { color: #ff6666; }
+    .td-pts { color: var(--cyan); font-weight: 700; }
+
+    /* Pool matches */
+    .pool-matches { padding: 0.8rem 1.2rem; border-top: 1px solid rgba(0,200,255,0.08); }
+    .pool-match-label {
+      font-family: var(--font-c);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 0.6rem;
+    }
+    .match-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .match-team {
+      font-family: var(--font-c);
+      font-weight: 600;
+      font-size: 0.82rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .match-team.right { text-align: right; }
+    .match-team.winner { color: var(--success); }
+    .match-score-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .score-input {
+      width: 42px;
+      background: rgba(0,200,255,0.06);
+      border: 1px solid rgba(0,200,255,0.18);
+      color: var(--white);
+      font-family: var(--font-d);
+      font-size: 1.1rem;
+      text-align: center;
+      padding: 0.2rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .score-input:focus { border-color: var(--cyan); }
+    .score-dash {
+      font-family: var(--font-c);
+      font-size: 0.7rem;
+      color: var(--gray);
+    }
+    .match-confirm {
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.6rem;
+      background: rgba(0,200,255,0.08);
+      border: 1px solid rgba(0,200,255,0.2);
+      color: var(--cyan);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .match-confirm:hover { background: var(--cyan); color: var(--navy); }
+    .match-confirm.done {
+      background: rgba(0,230,118,0.1);
+      border-color: rgba(0,230,118,0.3);
+      color: var(--success);
+    }
+
+    /* ── BRACKET VIEW ── */
+    .bracket-container {
+      display: flex;
+      gap: 0;
+      align-items: flex-start;
+      min-width: max-content;
+      padding-bottom: 2rem;
+    }
+    .bracket-round {
+      display: flex;
+      flex-direction: column;
+      min-width: 200px;
+    }
+    .round-header {
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid rgba(0,200,255,0.15);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .round-matches {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .bracket-match-wrap {
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+    .bracket-match {
+      width: 180px;
+      border: 1px solid rgba(0,200,255,0.15);
+      background: var(--dark);
+      margin: 0 10px;
+      transition: border-color 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+    .bracket-match:hover { border-color: rgba(0,200,255,0.4); }
+    .bracket-match.complete { border-color: rgba(0,200,255,0.3); }
+    .bracket-slot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.7rem;
+      min-height: 38px;
+      gap: 0.4rem;
+    }
+    .bracket-slot:first-child {
+      border-bottom: 1px solid rgba(0,200,255,0.08);
+    }
+    .bracket-slot-name {
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 0.8rem;
+      letter-spacing: 0.03em;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--gray);
+    }
+    .bracket-slot-name.filled { color: var(--white); }
+    .bracket-slot-name.winner { color: var(--success); }
+    .bracket-slot-score {
+      font-family: var(--font-d);
+      font-size: 1rem;
+      color: var(--cyan);
+      min-width: 22px;
+      text-align: center;
+    }
+    .bracket-slot-score.winner { color: var(--success); }
+    .bracket-seed {
+      font-family: var(--font-c);
+      font-size: 0.58rem;
+      color: var(--gray);
+      opacity: 0.6;
+      min-width: 16px;
+    }
+    .bracket-connector {
+      position: absolute;
+      right: -10px;
+      width: 10px;
+      border-top: 1px solid rgba(0,200,255,0.2);
+      top: 50%;
+    }
+
+    /* Score modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--dark);
+      border: 1px solid rgba(0,200,255,0.2);
+      padding: 2rem;
+      min-width: 320px;
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: none; }
+    }
+    .modal-title {
+      font-family: var(--font-d);
+      font-size: 1.6rem;
+      letter-spacing: 0.06em;
+      margin-bottom: 1.5rem;
+      color: var(--white);
+    }
+    .modal-match {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .modal-team {
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 1rem;
+      text-align: center;
+    }
+    .modal-score-input {
+      width: 64px;
+      background: rgba(0,200,255,0.06);
+      border: 1px solid rgba(0,200,255,0.3);
+      color: var(--white);
+      font-family: var(--font-d);
+      font-size: 2rem;
+      text-align: center;
+      padding: 0.4rem;
+      outline: none;
+    }
+    .modal-score-input:focus { border-color: var(--cyan); }
+    .modal-vs {
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: var(--gray);
+      text-align: center;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      color: var(--gray);
+      text-align: center;
+      gap: 1rem;
+    }
+    .empty-icon {
+      font-size: 3rem;
+      opacity: 0.3;
+    }
+    .empty-title {
+      font-family: var(--font-d);
+      font-size: 2rem;
+      letter-spacing: 0.06em;
+      color: rgba(240,246,255,0.3);
+    }
+    .empty-sub {
+      font-family: var(--font-c);
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      max-width: 300px;
+      line-height: 1.6;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--cyan);
+      color: var(--navy);
+      font-family: var(--font-c);
+      font-weight: 700;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      padding: 0.7rem 1.4rem;
+      z-index: 300;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s;
+    }
+    .toast.show { transform: none; opacity: 1; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid rgba(0,200,255,0.08); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">INDY <span>BLUEFIRE</span></div>
+  <div class="header-title">Tournament Manager</div>
+  <div class="phase-tabs">
+    <button class="phase-tab active" onclick="switchView('pools')">Pool Play</button>
+    <button class="phase-tab" onclick="switchView('bracket')">Bracket</button>
+  </div>
+</header>
+
+<!-- SCORE MODAL -->
+<div class="modal-overlay" id="scoreModal">
+  <div class="modal">
+    <div class="modal-title">Enter Score</div>
+    <div class="modal-match">
+      <div class="modal-team" id="modalTeam1">Team A</div>
+      <div>
+        <div class="modal-vs">VS</div>
+        <div style="display:flex;gap:0.4rem;align-items:center;margin-top:0.5rem;">
+          <input type="number" class="modal-score-input" id="modalScore1" min="0" max="99" placeholder="0"/>
+          <div class="modal-vs">—</div>
+          <input type="number" class="modal-score-input" id="modalScore2" min="0" max="99" placeholder="0"/>
+        </div>
+      </div>
+      <div class="modal-team" id="modalTeam2">Team B</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-success" onclick="submitScore()">Confirm Score</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- Stats -->
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-cell">
+        <div class="stat-num" id="statTeams">0</div>
+        <div class="stat-lbl">Teams</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num" id="statPools">0</div>
+        <div class="stat-lbl">Pools</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num" id="statMatches">0</div>
+        <div class="stat-lbl">Matches</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num" id="statDone">0</div>
+        <div class="stat-lbl">Complete</div>
+      </div>
+    </div>
+
+    <!-- Add Teams -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Add Teams</div>
+      <div class="team-input-wrap">
+        <input type="text" class="team-input" id="teamNameInput"
+               placeholder="Team or pair name..."
+               onkeydown="if(event.key==='Enter') addTeam()"/>
+        <button class="btn btn-cyan" onclick="addTeam()">Add</button>
+      </div>
+      <div class="team-list" id="teamList"></div>
+      <button class="btn btn-outline btn-full" onclick="addSampleTeams()" style="margin-top:0.8rem;">
+        + Load Sample Teams
+      </button>
+    </div>
+
+    <!-- Config -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Tournament Setup</div>
+      <div class="config-row">
+        <span class="config-label">Teams per Pool</span>
+        <select class="config-select" id="teamsPerPool">
+          <option value="3">3 teams</option>
+          <option value="4" selected>4 teams</option>
+          <option value="5">5 teams</option>
+          <option value="6">6 teams</option>
+        </select>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Advance per Pool</span>
+        <select class="config-select" id="advancePerPool">
+          <option value="1">Top 1</option>
+          <option value="2" selected>Top 2</option>
+          <option value="3">Top 3</option>
+        </select>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Points (Win)</span>
+        <select class="config-select" id="winPoints">
+          <option value="2" selected>2 pts</option>
+          <option value="3">3 pts</option>
+        </select>
+      </div>
+      <button class="btn btn-cyan btn-full" onclick="generateTournament()" style="margin-top:0.5rem;">
+        Generate Pools
+      </button>
+      <button class="btn btn-outline btn-full" onclick="resetTournament()">
+        Reset Everything
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- POOL PLAY VIEW -->
+    <div id="view-pools">
+      <div class="pools-grid" id="poolsGrid">
+        <div class="empty-state">
+          <div class="empty-icon">🏐</div>
+          <div class="empty-title">No Pools Yet</div>
+          <div class="empty-sub">Add teams on the left, configure your pool size, then click Generate Pools.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRACKET VIEW -->
+    <div id="view-bracket">
+      <div id="bracketWrap">
+        <div class="empty-state">
+          <div class="empty-icon">🏆</div>
+          <div class="empty-title">Bracket Not Ready</div>
+          <div class="empty-sub">Complete pool play first, then the bracket will be seeded automatically from pool standings.</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let state = {
+  teams: [],
+  pools: [],        // [{name, teams:[{name,w,l,pts,ptsDiff}], matches:[{t1,t2,s1,s2,done}]}]
+  bracket: [],      // [{round, matches:[{t1,t2,s1,s2,winner,done}]}]
+  bracketReady: false,
+  currentModal: null, // {type:'pool'|'bracket', poolIdx, matchIdx, roundIdx}
+};
+
+// ═══════════════════════════════════════
+// TEAM MANAGEMENT
+// ═══════════════════════════════════════
+function addTeam() {
+  const input = document.getElementById('teamNameInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (state.teams.find(t => t.toLowerCase() === name.toLowerCase())) {
+    showToast('Team already exists');
+    return;
+  }
+  state.teams.push(name);
+  input.value = '';
+  renderTeamList();
+  updateStats();
+}
+
+function removeTeam(idx) {
+  state.teams.splice(idx, 1);
+  renderTeamList();
+  updateStats();
+}
+
+function addSampleTeams() {
+  const samples = ['Sand Kings','Court Jesters','Block Party','Spike Squad',
+    'Net Ninjas','Dig Deep','Set Point','Kill Shot',
+    'Ace Patrol','Rally Cats','Top Gun','Free Agents'];
+  samples.forEach(t => { if (!state.teams.includes(t)) state.teams.push(t); });
+  renderTeamList();
+  updateStats();
+  showToast('Sample teams loaded!');
+}
+
+function renderTeamList() {
+  const list = document.getElementById('teamList');
+  if (!state.teams.length) { list.innerHTML = ''; return; }
+  list.innerHTML = state.teams.map((t,i) => `
+    <div class="team-item">
+      <div>
+        <span class="team-seed">#${i+1}</span>
+        <span class="team-item-name">${t}</span>
+      </div>
+      <button class="btn btn-danger" onclick="removeTeam(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════
+// TOURNAMENT GENERATION
+// ═══════════════════════════════════════
+function generateTournament() {
+  if (state.teams.length < 4) { showToast('Add at least 4 teams'); return; }
+  const tpp = parseInt(document.getElementById('teamsPerPool').value);
+
+  // Shuffle teams
+  const shuffled = [...state.teams].sort(() => Math.random() - 0.5);
+
+  // Split into pools
+  state.pools = [];
+  const poolNames = ['Pool A','Pool B','Pool C','Pool D','Pool E','Pool F','Pool G','Pool H'];
+  let i = 0, poolIdx = 0;
+  while (i < shuffled.length) {
+    const chunk = shuffled.slice(i, i + tpp);
+    if (chunk.length >= 2) {
+      state.pools.push({
+        name: poolNames[poolIdx] || `Pool ${poolIdx+1}`,
+        teams: chunk.map(name => ({ name, w:0, l:0, pts:0, ptsDiff:0 })),
+        matches: generateRoundRobin(chunk)
+      });
+    }
+    i += tpp;
+    poolIdx++;
+  }
+
+  state.bracketReady = false;
+  state.bracket = [];
+  renderPools();
+  updateStats();
+  showToast(`${state.pools.length} pools generated!`);
+}
+
+function generateRoundRobin(teams) {
+  const matches = [];
+  for (let i = 0; i < teams.length; i++) {
+    for (let j = i+1; j < teams.length; j++) {
+      matches.push({ t1: teams[i], t2: teams[j], s1: null, s2: null, done: false });
+    }
+  }
+  return matches;
+}
+
+// ═══════════════════════════════════════
+// POOL PLAY RENDERING
+// ═══════════════════════════════════════
+function renderPools() {
+  const grid = document.getElementById('poolsGrid');
+  if (!state.pools.length) {
+    grid.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🏐</div>
+      <div class="empty-title">No Pools Yet</div>
+      <div class="empty-sub">Add teams on the left and click Generate Pools.</div>
+    </div>`;
+    return;
+  }
+
+  const advance = parseInt(document.getElementById('advancePerPool').value);
+
+  grid.innerHTML = state.pools.map((pool, pi) => {
+    // Sort teams by pts desc, then ptsDiff desc
+    const sorted = [...pool.teams].sort((a,b) => b.pts - a.pts || b.ptsDiff - a.ptsDiff);
+
+    const standings = sorted.map((t, rank) => `
+      <tr>
+        <td>
+          <span class="pool-rank">${rank+1}</span>
+          <span class="pool-team-name ${rank < advance ? 'advancing' : ''}">${t.name}</span>
+          ${rank < advance ? '<span style="font-size:0.6rem;color:var(--success);margin-left:0.3rem;">▲</span>' : ''}
+        </td>
+        <td class="td-w">${t.w}</td>
+        <td class="td-l">${t.l}</td>
+        <td class="td-pts">${t.pts}</td>
+        <td style="color:var(--gray);font-size:0.8rem;">${t.ptsDiff > 0 ? '+' : ''}${t.ptsDiff}</td>
+      </tr>
+    `).join('');
+
+    const matches = pool.matches.map((m, mi) => {
+      const w1 = m.done && m.s1 > m.s2;
+      const w2 = m.done && m.s2 > m.s1;
+      return `
+        <div class="match-row">
+          <div class="match-team ${w1 ? 'winner' : ''}">${m.t1}</div>
+          <div class="match-score-wrap">
+            <input type="number" class="score-input" value="${m.s1 ?? ''}" min="0"
+                   onchange="updatePoolScore(${pi},${mi},0,this.value)"
+                   ${m.done ? 'disabled' : ''}/>
+            <span class="score-dash">—</span>
+            <input type="number" class="score-input" value="${m.s2 ?? ''}" min="0"
+                   onchange="updatePoolScore(${pi},${mi},1,this.value)"
+                   ${m.done ? 'disabled' : ''}/>
+            <button class="match-confirm ${m.done ? 'done' : ''}"
+                    onclick="confirmPoolMatch(${pi},${mi})">
+              ${m.done ? '✓' : 'Set'}
+            </button>
+          </div>
+          <div class="match-team right ${w2 ? 'winner' : ''}">${m.t2}</div>
+        </div>
+      `;
+    }).join('');
+
+    const allDone = pool.matches.every(m => m.done);
+
+    return `
+      <div class="pool-card">
+        <div class="pool-header">
+          <div class="pool-name">${pool.name}</div>
+          <div class="pool-record-head">W / L / PTS / +/-</div>
+        </div>
+        <table class="pool-table">
+          <thead><tr>
+            <th>Team</th><th>W</th><th>L</th><th>PTS</th><th>+/-</th>
+          </tr></thead>
+          <tbody>${standings}</tbody>
+        </table>
+        <div class="pool-matches">
+          <div class="pool-match-label">Matches</div>
+          ${matches}
+          ${allDone ? `<div style="font-family:var(--font-c);font-size:0.72rem;color:var(--success);letter-spacing:0.1em;margin-top:0.5rem;">✓ Pool Complete</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Check if all pools done — offer bracket generation
+  const allPoolsDone = state.pools.length > 0 && state.pools.every(p => p.matches.every(m => m.done));
+  if (allPoolsDone && !state.bracketReady) {
+    const existing = document.getElementById('generateBracketBtn');
+    if (!existing) {
+      const btn = document.createElement('div');
+      btn.id = 'generateBracketBtn';
+      btn.style.cssText = 'grid-column:1/-1;display:flex;justify-content:center;padding:1rem 0;';
+      btn.innerHTML = `<button class="btn btn-success" style="font-size:0.9rem;padding:0.8rem 2rem;letter-spacing:0.15em;" onclick="generateBracket()">
+        🏆 Pool Play Complete — Generate Bracket
+      </button>`;
+      document.getElementById('poolsGrid').appendChild(btn);
+    }
+  }
+}
+
+function updatePoolScore(pi, mi, slot, val) {
+  const match = state.pools[pi].matches[mi];
+  if (slot === 0) match.s1 = parseInt(val) || 0;
+  else match.s2 = parseInt(val) || 0;
+}
+
+function confirmPoolMatch(pi, mi) {
+  const match = state.pools[pi].matches[mi];
+  const pool = state.pools[pi];
+
+  if (match.done) {
+    // Undo
+    const t1 = pool.teams.find(t => t.name === match.t1);
+    const t2 = pool.teams.find(t => t.name === match.t2);
+    if (match.s1 > match.s2) { t1.w--; t1.pts -= parseInt(document.getElementById('winPoints').value); t2.l--; }
+    else { t2.w--; t2.pts -= parseInt(document.getElementById('winPoints').value); t1.l--; }
+    t1.ptsDiff -= (match.s1 - match.s2);
+    t2.ptsDiff -= (match.s2 - match.s1);
+    match.s1 = null; match.s2 = null; match.done = false;
+    renderPools(); updateStats(); return;
+  }
+
+  if (match.s1 === null || match.s2 === null) { showToast('Enter both scores first'); return; }
+  if (match.s1 === match.s2) { showToast('No ties allowed'); return; }
+
+  const winPts = parseInt(document.getElementById('winPoints').value);
+  const t1 = pool.teams.find(t => t.name === match.t1);
+  const t2 = pool.teams.find(t => t.name === match.t2);
+
+  if (match.s1 > match.s2) { t1.w++; t1.pts += winPts; t2.l++; }
+  else { t2.w++; t2.pts += winPts; t1.l++; }
+  t1.ptsDiff += (match.s1 - match.s2);
+  t2.ptsDiff += (match.s2 - match.s1);
+  match.done = true;
+
+  renderPools(); updateStats();
+  showToast(`${match.s1 > match.s2 ? match.t1 : match.t2} wins!`);
+}
+
+// ═══════════════════════════════════════
+// BRACKET GENERATION
+// ═══════════════════════════════════════
+function generateBracket() {
+  const advance = parseInt(document.getElementById('advancePerPool').value);
+
+  // Collect advancing teams in seed order
+  // Seed order: 1st from each pool, then 2nd from each pool, etc.
+  const seeds = [];
+  for (let rank = 0; rank < advance; rank++) {
+    state.pools.forEach(pool => {
+      const sorted = [...pool.teams].sort((a,b) => b.pts - a.pts || b.ptsDiff - a.ptsDiff);
+      if (sorted[rank]) seeds.push(sorted[rank].name);
+    });
+  }
+
+  // Pad to next power of 2
+  const size = nextPow2(seeds.length);
+  while (seeds.length < size) seeds.push('BYE');
+
+  // Build rounds
+  state.bracket = [];
+  let currentSeeds = seeds;
+
+  while (currentSeeds.length > 1) {
+    const matches = [];
+    for (let i = 0; i < currentSeeds.length; i += 2) {
+      matches.push({
+        t1: currentSeeds[i],
+        t2: currentSeeds[i+1],
+        s1: null, s2: null,
+        winner: currentSeeds[i+1] === 'BYE' ? currentSeeds[i] : null,
+        done: currentSeeds[i+1] === 'BYE'
+      });
+    }
+    const roundNum = state.bracket.length + 1;
+    const totalRounds = Math.log2(size);
+    let roundName = `Round ${roundNum}`;
+    if (matches.length === 1) roundName = 'Championship';
+    else if (matches.length === 2) roundName = 'Semifinals';
+    else if (matches.length === 4) roundName = 'Quarterfinals';
+
+    state.bracket.push({ name: roundName, matches });
+    // Next round seeds = TBD (null for non-bye matches)
+    currentSeeds = matches.map(m => m.winner || null);
+    if (currentSeeds.every(s => s === null)) break;
+  }
+
+  // Auto-advance byes
+  autoAdvanceByes();
+
+  state.bracketReady = true;
+  renderBracket();
+  switchView('bracket');
+  showToast(`Bracket seeded with ${seeds.filter(s=>s!=='BYE').length} teams!`);
+}
+
+function nextPow2(n) {
+  let p = 1;
+  while (p < n) p *= 2;
+  return p;
+}
+
+function autoAdvanceByes() {
+  state.bracket.forEach((round, ri) => {
+    round.matches.forEach((match, mi) => {
+      if (match.done && match.winner && ri + 1 < state.bracket.length) {
+        advanceWinner(ri, mi, match.winner);
+      }
+    });
+  });
+}
+
+// ═══════════════════════════════════════
+// BRACKET RENDERING
+// ═══════════════════════════════════════
+function renderBracket() {
+  const wrap = document.getElementById('bracketWrap');
+  if (!state.bracketReady || !state.bracket.length) {
+    wrap.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🏆</div>
+      <div class="empty-title">Bracket Not Ready</div>
+      <div class="empty-sub">Complete pool play first.</div>
+    </div>`;
+    return;
+  }
+
+  const totalRounds = state.bracket.length;
+
+  // Calculate spacing so matches align vertically
+  let html = '<div class="bracket-container">';
+
+  state.bracket.forEach((round, ri) => {
+    const matchCount = round.matches.length;
+    const totalHeight = Math.pow(2, totalRounds - 1) * 90; // base height
+    const matchSpacing = totalHeight / matchCount;
+
+    html += `<div class="bracket-round">
+      <div class="round-header">${round.name}</div>
+      <div class="round-matches" style="gap:${matchSpacing - 76}px;">`;
+
+    round.matches.forEach((match, mi) => {
+      const w1 = match.done && match.winner === match.t1;
+      const w2 = match.done && match.winner === match.t2;
+      const isConnector = ri < totalRounds - 1;
+
+      html += `
+        <div class="bracket-match-wrap">
+          <div class="bracket-match ${match.done ? 'complete' : ''}"
+               onclick="openBracketModal(${ri},${mi})">
+            <div class="bracket-slot">
+              <span class="bracket-seed">${match.t1 ? getSeed(match.t1) : ''}</span>
+              <span class="bracket-slot-name ${match.t1 ? 'filled' : ''} ${w1 ? 'winner' : ''}">${match.t1 || 'TBD'}</span>
+              <span class="bracket-slot-score ${w1 ? 'winner' : ''}">${match.s1 !== null ? match.s1 : ''}</span>
+            </div>
+            <div class="bracket-slot">
+              <span class="bracket-seed">${match.t2 ? getSeed(match.t2) : ''}</span>
+              <span class="bracket-slot-name ${match.t2 ? 'filled' : ''} ${w2 ? 'winner' : ''}">${match.t2 || 'TBD'}</span>
+              <span class="bracket-slot-score ${w2 ? 'winner' : ''}">${match.s2 !== null ? match.s2 : ''}</span>
+            </div>
+          </div>
+          ${isConnector ? '<div class="bracket-connector"></div>' : ''}
+        </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function getSeed(teamName) {
+  // Find seed from original bracket order
+  for (let ri = 0; ri < state.bracket.length; ri++) {
+    const firstRound = state.bracket[0];
+    for (let mi = 0; mi < firstRound.matches.length; mi++) {
+      if (firstRound.matches[mi].t1 === teamName) return `S${mi*2+1}`;
+      if (firstRound.matches[mi].t2 === teamName) return `S${mi*2+2}`;
+    }
+  }
+  return '';
+}
+
+// ═══════════════════════════════════════
+// BRACKET SCORE MODAL
+// ═══════════════════════════════════════
+function openBracketModal(ri, mi) {
+  const match = state.bracket[ri].matches[mi];
+  if (!match.t1 || !match.t2 || match.t1 === 'TBD' || match.t2 === 'TBD') {
+    showToast('Waiting for teams to advance');
+    return;
+  }
+  if (match.done) {
+    // Allow undo
+    if (confirm(`Undo score for ${match.t1} vs ${match.t2}?`)) {
+      undoBracketMatch(ri, mi);
+    }
+    return;
+  }
+
+  state.currentModal = { type: 'bracket', roundIdx: ri, matchIdx: mi };
+  document.getElementById('modalTeam1').textContent = match.t1;
+  document.getElementById('modalTeam2').textContent = match.t2;
+  document.getElementById('modalScore1').value = '';
+  document.getElementById('modalScore2').value = '';
+  document.getElementById('scoreModal').classList.add('open');
+  setTimeout(() => document.getElementById('modalScore1').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('scoreModal').classList.remove('open');
+  state.currentModal = null;
+}
+
+function submitScore() {
+  const s1 = parseInt(document.getElementById('modalScore1').value);
+  const s2 = parseInt(document.getElementById('modalScore2').value);
+
+  if (isNaN(s1) || isNaN(s2)) { showToast('Enter both scores'); return; }
+  if (s1 === s2) { showToast('No ties allowed'); return; }
+
+  const { roundIdx: ri, matchIdx: mi } = state.currentModal;
+  const match = state.bracket[ri].matches[mi];
+  match.s1 = s1;
+  match.s2 = s2;
+  match.winner = s1 > s2 ? match.t1 : match.t2;
+  match.done = true;
+
+  // Advance winner
+  advanceWinner(ri, mi, match.winner);
+
+  closeModal();
+  renderBracket();
+  updateStats();
+  showToast(`${match.winner} advances!`);
+}
+
+function advanceWinner(ri, mi, winner) {
+  if (ri + 1 >= state.bracket.length) return;
+  const nextMatchIdx = Math.floor(mi / 2);
+  const nextSlot = mi % 2 === 0 ? 't1' : 't2';
+  const nextMatch = state.bracket[ri + 1].matches[nextMatchIdx];
+  if (nextMatch) {
+    nextMatch[nextSlot] = winner;
+    // Auto-advance if opponent is BYE
+    if (nextMatch.t1 && nextMatch.t2 === 'BYE') {
+      nextMatch.winner = nextMatch.t1; nextMatch.done = true;
+      advanceWinner(ri + 1, nextMatchIdx, nextMatch.t1);
+    } else if (nextMatch.t2 && nextMatch.t1 === 'BYE') {
+      nextMatch.winner = nextMatch.t2; nextMatch.done = true;
+      advanceWinner(ri + 1, nextMatchIdx, nextMatch.t2);
+    }
+  }
+}
+
+function undoBracketMatch(ri, mi) {
+  const match = state.bracket[ri].matches[mi];
+  const winner = match.winner;
+  match.s1 = null; match.s2 = null; match.winner = null; match.done = false;
+
+  // Clear downstream
+  clearDownstream(ri, mi, winner);
+  renderBracket(); updateStats();
+  showToast('Score cleared');
+}
+
+function clearDownstream(ri, mi, teamName) {
+  if (ri + 1 >= state.bracket.length) return;
+  const nextMatchIdx = Math.floor(mi / 2);
+  const nextSlot = mi % 2 === 0 ? 't1' : 't2';
+  const nextMatch = state.bracket[ri + 1].matches[nextMatchIdx];
+  if (nextMatch && nextMatch[nextSlot] === teamName) {
+    const prevWinner = nextMatch.winner;
+    nextMatch[nextSlot] = null;
+    nextMatch.winner = null; nextMatch.done = false;
+    nextMatch.s1 = null; nextMatch.s2 = null;
+    if (prevWinner) clearDownstream(ri + 1, nextMatchIdx, prevWinner);
+  }
+}
+
+// ═══════════════════════════════════════
+// UI UTILITIES
+// ═══════════════════════════════════════
+function switchView(view) {
+  document.getElementById('view-pools').style.display = view === 'pools' ? 'block' : 'none';
+  document.getElementById('view-bracket').style.display = view === 'bracket' ? 'block' : 'none';
+  document.querySelectorAll('.phase-tab').forEach((tab, i) => {
+    tab.classList.toggle('active', (i === 0 && view === 'pools') || (i === 1 && view === 'bracket'));
+  });
+  if (view === 'bracket') renderBracket();
+}
+
+function updateStats() {
+  document.getElementById('statTeams').textContent = state.teams.length;
+  document.getElementById('statPools').textContent = state.pools.length;
+  const totalMatches = state.pools.reduce((acc, p) => acc + p.matches.length, 0) +
+    state.bracket.reduce((acc, r) => acc + r.matches.filter(m => !m.t2 || m.t2 !== 'BYE').length, 0);
+  const doneMatches = state.pools.reduce((acc, p) => acc + p.matches.filter(m => m.done).length, 0) +
+    state.bracket.reduce((acc, r) => acc + r.matches.filter(m => m.done && m.t2 !== 'BYE').length, 0);
+  document.getElementById('statMatches').textContent = totalMatches;
+  document.getElementById('statDone').textContent = doneMatches;
+}
+
+function resetTournament() {
+  if (!confirm('Reset everything? This cannot be undone.')) return;
+  state.pools = []; state.bracket = []; state.bracketReady = false;
+  renderPools(); renderBracket(); updateStats();
+  showToast('Tournament reset');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Close modal on overlay click
+document.getElementById('scoreModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Keyboard shortcut: Enter to submit score
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && state.currentModal?.type === 'bracket') submitScore();
+});
+</script>
+</body>
+</html>
