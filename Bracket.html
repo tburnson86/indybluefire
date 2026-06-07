@@ -611,8 +611,11 @@
 
 <!-- HEADER -->
 <header>
-  <div class="logo">INDY <span>BLUEFIRE</span></div>
-  <div class="header-title">Tournament Manager</div>
+  <div style="display:flex;align-items:center;gap:1.2rem;">
+    <a href="index.html" style="font-family:var(--font-c);font-size:0.7rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray);text-decoration:none;display:flex;align-items:center;gap:0.4rem;border:1px solid rgba(255,255,255,0.08);padding:0.4rem 0.9rem;transition:all 0.2s;" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(0,200,255,0.35)'" onmouseout="this.style.color='var(--gray)';this.style.borderColor='rgba(255,255,255,0.08)'">← Site</a>
+    <div class="logo">INDY <span>BLUEFIRE</span></div>
+    <div class="header-title">Tournament Manager</div>
+  </div>
   <div class="phase-tabs">
     <button class="phase-tab active" onclick="switchView('pools')">Pool Play</button>
     <button class="phase-tab" onclick="switchView('bracket')">Bracket</button>
