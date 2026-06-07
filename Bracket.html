@@ -3,1285 +3,733 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Indy Bluefire — Tournament Bracket</title>
+  <title>Indy Bluefire — Tournament Manager</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
     :root {
-      --navy:    #030b1a;
-      --dark:    #050d1e;
-      --mid:     #0a1f4e;
-      --blue:    #0047ff;
-      --cyan:    #00c8ff;
-      --cyan2:   #00eaff;
-      --white:   #f0f6ff;
-      --gray:    #7a8faa;
-      --success: #00e676;
-      --warn:    #ffd84d;
-      --font-d:  'Bebas Neue', sans-serif;
-      --font-c:  'Barlow Condensed', sans-serif;
-      --font-b:  'Barlow', sans-serif;
+      --navy:#030b1a;--dark:#050d1e;--mid:#0a1f4e;--blue:#0047ff;
+      --cyan:#00c8ff;--cyan2:#00eaff;--white:#f0f6ff;--gray:#7a8faa;
+      --success:#00e676;--warn:#ffd84d;--danger:#ff4444;
+      --font-d:'Bebas Neue',sans-serif;--font-c:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;
+      --mw:200px;--mh:90px;--rw:260px;
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      background: var(--navy);
-      color: var(--white);
-      font-family: var(--font-b);
-      min-height: 100vh;
-    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{background:var(--navy);color:var(--white);font-family:var(--font-b);min-height:100vh;}
 
-    /* ── HEADER ── */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 2rem;
-      border-bottom: 1px solid rgba(0,200,255,0.12);
-      background: rgba(3,11,26,0.95);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .logo {
-      font-family: var(--font-d);
-      font-size: 1.4rem;
-      letter-spacing: 0.08em;
-      color: var(--white);
-    }
-    .logo span { color: var(--cyan); }
-    .header-title {
-      font-family: var(--font-c);
-      font-size: 0.75rem;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--gray);
-    }
-    .phase-tabs {
-      display: flex;
-      gap: 2px;
-    }
-    .phase-tab {
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 0.72rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      padding: 0.5rem 1.2rem;
-      background: transparent;
-      color: var(--gray);
-      border: 1px solid rgba(255,255,255,0.08);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .phase-tab.active {
-      background: var(--cyan);
-      color: var(--navy);
-      border-color: var(--cyan);
-    }
-    .phase-tab:hover:not(.active) { border-color: var(--cyan); color: var(--cyan); }
+    /* HEADER */
+    header{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1.5rem;border-bottom:1px solid rgba(0,200,255,.12);background:rgba(3,11,26,.97);position:sticky;top:0;z-index:100;gap:1rem;}
+    .hl{display:flex;align-items:center;gap:1rem;}
+    .back{font-family:var(--font-c);font-weight:700;font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gray);text-decoration:none;border:1px solid rgba(255,255,255,.08);padding:.4rem .8rem;transition:all .2s;}
+    .back:hover{color:var(--cyan);border-color:rgba(0,200,255,.35);}
+    .logo{font-family:var(--font-d);font-size:1.3rem;letter-spacing:.08em;}
+    .logo span{color:var(--cyan);}
+    .htitle{font-family:var(--font-c);font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gray);}
+    .tabs{display:flex;gap:2px;}
+    .tab{font-family:var(--font-c);font-weight:700;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;padding:.45rem 1.1rem;background:transparent;color:var(--gray);border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:all .2s;}
+    .tab.active{background:var(--cyan);color:var(--navy);border-color:var(--cyan);}
+    .tab:hover:not(.active){border-color:var(--cyan);color:var(--cyan);}
 
-    /* ── MAIN LAYOUT ── */
-    .app {
-      display: grid;
-      grid-template-columns: 300px 1fr;
-      min-height: calc(100vh - 57px);
-    }
+    /* LAYOUT */
+    .app{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 53px);}
+    .sidebar{background:var(--dark);border-right:1px solid rgba(0,200,255,.08);padding:1.2rem;overflow-y:auto;max-height:calc(100vh - 53px);}
+    .sb-sec{margin-bottom:1.6rem;}
+    .sb-lbl{font-family:var(--font-c);font-weight:700;font-size:.62rem;letter-spacing:.25em;text-transform:uppercase;color:var(--cyan);margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem;}
+    .sb-lbl::after{content:'';flex:1;height:1px;background:rgba(0,200,255,.15);}
+    .ti-wrap{display:flex;gap:.4rem;margin-bottom:.6rem;}
+    .ti{flex:1;background:rgba(0,200,255,.04);border:1px solid rgba(0,200,255,.15);color:var(--white);font-family:var(--font-c);font-size:.88rem;padding:.5rem .7rem;outline:none;transition:border-color .2s;}
+    .ti:focus{border-color:var(--cyan);}
+    .ti::placeholder{color:var(--gray);}
+    .btn{font-family:var(--font-c);font-weight:700;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;padding:.5rem .9rem;cursor:pointer;border:none;transition:all .15s;}
+    .btn-cyan{background:var(--cyan);color:var(--navy);}
+    .btn-cyan:hover{background:var(--cyan2);}
+    .btn-out{background:transparent;color:var(--gray);border:1px solid rgba(255,255,255,.1);}
+    .btn-out:hover{border-color:var(--cyan);color:var(--cyan);}
+    .btn-ok{background:var(--success);color:var(--navy);}
+    .btn-ok:hover{filter:brightness(1.1);}
+    .btn-rm{background:transparent;color:var(--danger);border:1px solid rgba(255,68,68,.2);padding:.25rem .5rem;font-size:.62rem;}
+    .btn-rm:hover{background:rgba(255,68,68,.1);}
+    .btn-full{width:100%;margin-top:.4rem;}
+    .tlist{display:flex;flex-direction:column;gap:.3rem;max-height:240px;overflow-y:auto;}
+    .ti2{display:flex;align-items:center;justify-content:space-between;background:rgba(0,200,255,.03);border:1px solid rgba(0,200,255,.07);padding:.38rem .7rem;}
+    .ti2n{font-family:var(--font-c);font-weight:700;font-size:.82rem;}
+    .tseed{font-family:var(--font-c);font-size:.6rem;color:var(--cyan);opacity:.6;margin-right:.3rem;}
+    .cfg-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;gap:.5rem;}
+    .cfg-lbl{font-family:var(--font-c);font-size:.8rem;color:var(--gray);flex:1;}
+    .cfg-sel{background:rgba(0,200,255,.04);border:1px solid rgba(0,200,255,.15);color:var(--white);font-family:var(--font-c);font-size:.8rem;padding:.28rem .5rem;outline:none;min-width:70px;}
+    .cfg-sel option{background:var(--dark);}
+    .cfg-num{background:rgba(0,200,255,.04);border:1px solid rgba(0,200,255,.15);color:var(--white);font-family:var(--font-c);font-size:.88rem;padding:.28rem .5rem;outline:none;width:60px;text-align:center;}
+    .cfg-num:focus,.cfg-sel:focus{border-color:var(--cyan);}
+    .stats-bar{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(0,200,255,.07);margin-bottom:1.2rem;}
+    .scell{background:var(--dark);padding:.6rem;text-align:center;}
+    .snum{font-family:var(--font-d);font-size:1.6rem;color:var(--cyan);line-height:1;}
+    .slbl{font-family:var(--font-c);font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;color:var(--gray);margin-top:.15rem;}
+    .prog-wrap{background:rgba(0,200,255,.06);border:1px solid rgba(0,200,255,.1);height:4px;margin-bottom:1rem;}
+    .prog-bar{height:100%;background:linear-gradient(to right,var(--blue),var(--cyan));transition:width .4s;}
+    .court-box{background:rgba(0,200,255,.04);border:1px solid rgba(0,200,255,.1);padding:.7rem;margin-top:.5rem;}
+    .court-row{display:flex;align-items:center;justify-content:space-between;padding:.28rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-family:var(--font-c);font-size:.75rem;}
+    .court-row:last-child{border-bottom:none;}
+    .court-badge{background:var(--mid);color:var(--cyan);font-family:var(--font-c);font-weight:700;font-size:.6rem;letter-spacing:.1em;padding:.15rem .45rem;}
+    .cdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+    .cdot.busy{background:var(--warn);}
+    .cdot.free{background:var(--success);}
 
-    /* ── SIDEBAR ── */
-    .sidebar {
-      background: var(--dark);
-      border-right: 1px solid rgba(0,200,255,0.08);
-      padding: 1.5rem;
-      overflow-y: auto;
-    }
-    .sidebar-section {
-      margin-bottom: 2rem;
-    }
-    .sidebar-label {
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 0.65rem;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--cyan);
-      margin-bottom: 0.8rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .sidebar-label::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(0,200,255,0.15);
-    }
+    /* MAIN */
+    .main{overflow:auto;padding:1.2rem;}
+    #vp{display:block;}
+    #vb{display:none;}
 
-    /* Team input */
-    .team-input-wrap {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.8rem;
-    }
-    .team-input {
-      flex: 1;
-      background: rgba(0,200,255,0.04);
-      border: 1px solid rgba(0,200,255,0.15);
-      color: var(--white);
-      font-family: var(--font-c);
-      font-size: 0.9rem;
-      padding: 0.55rem 0.8rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .team-input:focus { border-color: var(--cyan); }
-    .team-input::placeholder { color: var(--gray); }
-    .btn {
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 0.72rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 0.55rem 1rem;
-      cursor: pointer;
-      border: none;
-      transition: all 0.15s;
-    }
-    .btn-cyan { background: var(--cyan); color: var(--navy); }
-    .btn-cyan:hover { background: var(--cyan2); }
-    .btn-outline {
-      background: transparent;
-      color: var(--gray);
-      border: 1px solid rgba(255,255,255,0.12);
-    }
-    .btn-outline:hover { border-color: var(--cyan); color: var(--cyan); }
-    .btn-danger {
-      background: transparent;
-      color: #ff4444;
-      border: 1px solid rgba(255,68,68,0.2);
-      padding: 0.3rem 0.6rem;
-      font-size: 0.65rem;
-    }
-    .btn-danger:hover { background: rgba(255,68,68,0.1); }
-    .btn-success { background: var(--success); color: var(--navy); }
-    .btn-success:hover { filter: brightness(1.1); }
-    .btn-full { width: 100%; margin-top: 0.5rem; }
+    /* POOLS */
+    .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.2rem;}
+    .pcard{background:var(--dark);border:1px solid rgba(0,200,255,.08);}
+    .phdr{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1.1rem;border-bottom:1px solid rgba(0,200,255,.08);background:rgba(0,200,255,.03);}
+    .pname{font-family:var(--font-d);font-size:1.2rem;letter-spacing:.06em;color:var(--cyan);}
+    .ptbl{width:100%;}
+    .ptbl th{font-family:var(--font-c);font-weight:700;font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gray);padding:.45rem 1rem;text-align:left;}
+    .ptbl th:not(:first-child){text-align:center;}
+    .ptbl td{padding:.4rem 1rem;border-top:1px solid rgba(255,255,255,.03);font-family:var(--font-c);font-size:.84rem;}
+    .ptbl td:not(:first-child){text-align:center;}
+    .adv{color:var(--success);font-weight:700;}
+    .tw{color:var(--success);font-weight:700;}
+    .tl{color:#ff6666;}
+    .tp{color:var(--cyan);font-weight:700;}
+    .prank{font-family:var(--font-c);font-size:.65rem;color:var(--gray);margin-right:.4rem;}
+    .pmatches{padding:.7rem 1rem;border-top:1px solid rgba(0,200,255,.08);}
+    .pmlbl{font-family:var(--font-c);font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gray);margin-bottom:.5rem;}
+    .mrow{margin-bottom:.7rem;border:1px solid rgba(0,200,255,.07);background:rgba(0,0,0,.15);}
+    .mrowhdr{display:flex;align-items:center;justify-content:space-between;padding:.3rem .7rem;border-bottom:1px solid rgba(0,200,255,.07);background:rgba(0,200,255,.03);}
+    .mteams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.4rem;padding:.4rem .7rem;}
+    .mt{font-family:var(--font-c);font-weight:700;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .mt.r{text-align:right;}
+    .mt.win{color:var(--success);}
+    .grows{display:grid;gap:2px;padding:0 .7rem .5rem;}
+    .gcell{background:rgba(0,200,255,.04);border:1px solid rgba(0,200,255,.08);padding:.3rem .4rem;}
+    .glbl{font-family:var(--font-c);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:.2rem;}
+    .gsc-row{display:flex;align-items:center;gap:.25rem;}
+    .sc{width:36px;background:rgba(0,200,255,.06);border:1px solid rgba(0,200,255,.15);color:var(--white);font-family:var(--font-d);font-size:1rem;text-align:center;padding:.15rem 0;outline:none;}
+    .sc:focus{border-color:var(--cyan);}
+    .sc:disabled{opacity:.35;}
+    .scdash{font-family:var(--font-c);font-size:.65rem;color:var(--gray);}
+    .gwbadge{font-family:var(--font-c);font-size:.55rem;font-weight:700;text-align:center;margin-top:.18rem;min-height:12px;}
+    .mfooter{display:flex;align-items:center;justify-content:space-between;padding:.3rem .7rem .4rem;gap:.5rem;}
+    .sscore{font-family:var(--font-d);font-size:1.1rem;color:var(--cyan);}
+    .ctag{font-family:var(--font-c);font-size:.62rem;letter-spacing:.1em;color:var(--warn);background:rgba(255,216,77,.08);border:1px solid rgba(255,216,77,.2);padding:.15rem .5rem;}
+    .cfmbtn{font-family:var(--font-c);font-weight:700;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .7rem;background:rgba(0,200,255,.08);border:1px solid rgba(0,200,255,.2);color:var(--cyan);cursor:pointer;transition:all .15s;}
+    .cfmbtn:hover{background:var(--cyan);color:var(--navy);}
+    .cfmbtn.done{background:rgba(0,230,118,.1);border-color:rgba(0,230,118,.3);color:var(--success);}
 
-    /* Team list */
-    .team-list { display: flex; flex-direction: column; gap: 0.4rem; }
-    .team-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(0,200,255,0.04);
-      border: 1px solid rgba(0,200,255,0.08);
-      padding: 0.5rem 0.8rem;
-      transition: border-color 0.2s;
-    }
-    .team-item:hover { border-color: rgba(0,200,255,0.2); }
-    .team-item-name {
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 0.88rem;
-      letter-spacing: 0.04em;
-    }
-    .team-seed {
-      font-family: var(--font-c);
-      font-size: 0.65rem;
-      letter-spacing: 0.15em;
-      color: var(--cyan);
-      opacity: 0.7;
-    }
+    /* BRACKET */
+    .bouter{position:relative;overflow:auto;padding:1rem;}
+    .bsvg{position:absolute;top:0;left:0;pointer-events:none;z-index:0;}
+    .bcontent{position:relative;z-index:1;display:flex;align-items:flex-start;min-width:max-content;padding-bottom:2rem;}
+    .bround{display:flex;flex-direction:column;width:var(--rw);}
+    .rhdr{font-family:var(--font-c);font-weight:700;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);padding:.5rem 10px;margin-bottom:.5rem;border-bottom:1px solid rgba(0,200,255,.15);text-align:center;}
+    .bmatches{display:flex;flex-direction:column;}
+    .bmwrap{display:flex;align-items:center;position:relative;}
+    .bm{width:var(--mw);border:1px solid rgba(0,200,255,.15);background:var(--dark);margin:0 10px;cursor:pointer;transition:border-color .2s;position:relative;flex-shrink:0;}
+    .bm:hover{border-color:rgba(0,200,255,.45);}
+    .bm.complete{border-color:rgba(0,230,118,.3);}
+    .bm-court{position:absolute;top:-1px;right:-1px;font-family:var(--font-c);font-weight:700;font-size:.55rem;letter-spacing:.08em;background:var(--warn);color:var(--navy);padding:.1rem .4rem;z-index:2;}
+    .bs{display:flex;align-items:center;justify-content:space-between;padding:.38rem .6rem;min-height:36px;gap:.3rem;}
+    .bs:first-child{border-bottom:1px solid rgba(0,200,255,.08);}
+    .bs-seed{font-family:var(--font-c);font-size:.55rem;color:var(--gray);opacity:.55;min-width:18px;}
+    .bs-name{font-family:var(--font-c);font-weight:700;font-size:.76rem;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--gray);}
+    .bs-name.filled{color:var(--white);}
+    .bs-name.winner{color:var(--success);}
+    .bs-w{font-family:var(--font-d);font-size:1rem;color:var(--cyan);min-width:14px;text-align:center;}
+    .bs-w.winner{color:var(--success);}
+    .bmbadge{text-align:center;padding:.16rem;font-family:var(--font-c);font-size:.56rem;letter-spacing:.1em;border-top:1px solid rgba(0,200,255,.08);background:rgba(0,0,0,.2);color:var(--gray);}
+    .champ-wrap{display:flex;align-items:center;}
+    .champ-card{width:var(--mw);margin:0 10px;border:2px solid var(--warn);background:linear-gradient(135deg,rgba(255,216,77,.08),rgba(0,200,255,.05));text-align:center;padding:1rem .8rem;}
+    .champ-lbl{font-family:var(--font-c);font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--warn);margin-bottom:.3rem;}
+    .champ-name{font-family:var(--font-d);font-size:1.6rem;letter-spacing:.04em;color:var(--white);}
 
-    /* Pool config */
-    .config-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 0.6rem;
-    }
-    .config-label {
-      font-family: var(--font-c);
-      font-size: 0.82rem;
-      color: var(--gray);
-    }
-    .config-select {
-      background: rgba(0,200,255,0.04);
-      border: 1px solid rgba(0,200,255,0.15);
-      color: var(--white);
-      font-family: var(--font-c);
-      font-size: 0.82rem;
-      padding: 0.3rem 0.6rem;
-      outline: none;
-    }
-    .config-select option { background: var(--dark); }
+    /* MODAL */
+    .moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:200;align-items:center;justify-content:center;}
+    .moverlay.open{display:flex;}
+    .modal{background:var(--dark);border:1px solid rgba(0,200,255,.25);padding:1.8rem;min-width:380px;max-width:96vw;animation:mIn .18s ease;}
+    @keyframes mIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
+    .mtitle{font-family:var(--font-d);font-size:1.5rem;letter-spacing:.06em;margin-bottom:.3rem;}
+    .msub{font-family:var(--font-c);font-size:.72rem;letter-spacing:.12em;color:var(--gray);margin-bottom:1rem;}
+    .mcourt-row{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem;}
+    .mcourt-lbl{font-family:var(--font-c);font-size:.72rem;letter-spacing:.12em;color:var(--gray);}
+    .mcourt-sel{background:rgba(255,216,77,.06);border:1px solid rgba(255,216,77,.25);color:var(--warn);font-family:var(--font-c);font-weight:700;font-size:.82rem;padding:.3rem .6rem;outline:none;}
+    .mcourt-sel option{background:var(--dark);color:var(--white);}
+    .mgames{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1rem;}
+    .gblock{border:1px solid rgba(0,200,255,.12);padding:.7rem .6rem;background:rgba(0,0,0,.2);}
+    .gblock.disabled{opacity:.35;pointer-events:none;}
+    .gblock.decided{border-color:rgba(0,230,118,.25);}
+    .gblbl{font-family:var(--font-c);font-weight:700;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gray);margin-bottom:.5rem;}
+    .gbsc-row{display:flex;align-items:center;justify-content:center;gap:.5rem;}
+    .gbsc{width:52px;background:rgba(0,200,255,.06);border:1px solid rgba(0,200,255,.2);color:var(--white);font-family:var(--font-d);font-size:1.6rem;text-align:center;padding:.2rem;outline:none;}
+    .gbsc:focus{border-color:var(--cyan);}
+    .gbvs{font-family:var(--font-c);font-size:.7rem;color:var(--gray);}
+    .gbwinner{font-family:var(--font-c);font-size:.65rem;font-weight:700;text-align:center;margin-top:.35rem;min-height:14px;}
+    .mser{font-family:var(--font-d);font-size:2.2rem;letter-spacing:.04em;text-align:center;color:var(--cyan);margin-bottom:.8rem;}
+    .msteams{display:flex;justify-content:space-between;font-family:var(--font-c);font-weight:700;font-size:.85rem;margin-bottom:.4rem;}
+    .mactions{display:flex;gap:.5rem;justify-content:flex-end;}
 
-    /* Stats bar */
-    .stats-bar {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      background: rgba(0,200,255,0.08);
-      margin-bottom: 1.5rem;
-    }
-    .stat-cell {
-      background: var(--dark);
-      padding: 0.8rem;
-      text-align: center;
-    }
-    .stat-num {
-      font-family: var(--font-d);
-      font-size: 1.8rem;
-      color: var(--cyan);
-      line-height: 1;
-    }
-    .stat-lbl {
-      font-family: var(--font-c);
-      font-size: 0.6rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--gray);
-      margin-top: 0.2rem;
-    }
-
-    /* ── MAIN CONTENT ── */
-    .main {
-      padding: 1.5rem;
-      overflow-x: auto;
-    }
-
-    /* ── POOL PLAY VIEW ── */
-    #view-pools { display: block; }
-    #view-bracket { display: none; }
-
-    .pools-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .pool-card {
-      background: var(--dark);
-      border: 1px solid rgba(0,200,255,0.08);
-    }
-    .pool-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.8rem 1.2rem;
-      border-bottom: 1px solid rgba(0,200,255,0.08);
-      background: rgba(0,200,255,0.04);
-    }
-    .pool-name {
-      font-family: var(--font-d);
-      font-size: 1.3rem;
-      letter-spacing: 0.06em;
-      color: var(--cyan);
-    }
-    .pool-record-head {
-      font-family: var(--font-c);
-      font-size: 0.62rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--gray);
-    }
-
-    /* Pool standings table */
-    .pool-table { width: 100%; }
-    .pool-table th {
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 0.6rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--gray);
-      padding: 0.5rem 1.2rem;
-      text-align: left;
-    }
-    .pool-table th:not(:first-child) { text-align: center; }
-    .pool-table td {
-      padding: 0.5rem 1.2rem;
-      border-top: 1px solid rgba(255,255,255,0.04);
-      font-family: var(--font-c);
-      font-size: 0.88rem;
-    }
-    .pool-table td:not(:first-child) { text-align: center; }
-    .pool-rank {
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 0.7rem;
-      color: var(--gray);
-      margin-right: 0.5rem;
-    }
-    .pool-team-name { font-weight: 700; }
-    .advancing { color: var(--success); }
-    .td-w { color: var(--success); font-weight: 700; }
-    .td-l { color: #ff6666; }
-    .td-pts { color: var(--cyan); font-weight: 700; }
-
-    /* Pool matches */
-    .pool-matches { padding: 0.8rem 1.2rem; border-top: 1px solid rgba(0,200,255,0.08); }
-    .pool-match-label {
-      font-family: var(--font-c);
-      font-size: 0.6rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--gray);
-      margin-bottom: 0.6rem;
-    }
-    .match-row {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-      padding: 0.4rem 0;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-    }
-    .match-team {
-      font-family: var(--font-c);
-      font-weight: 600;
-      font-size: 0.82rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .match-team.right { text-align: right; }
-    .match-team.winner { color: var(--success); }
-    .match-score-wrap {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-    .score-input {
-      width: 42px;
-      background: rgba(0,200,255,0.06);
-      border: 1px solid rgba(0,200,255,0.18);
-      color: var(--white);
-      font-family: var(--font-d);
-      font-size: 1.1rem;
-      text-align: center;
-      padding: 0.2rem;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .score-input:focus { border-color: var(--cyan); }
-    .score-dash {
-      font-family: var(--font-c);
-      font-size: 0.7rem;
-      color: var(--gray);
-    }
-    .match-confirm {
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 0.6rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 0.25rem 0.6rem;
-      background: rgba(0,200,255,0.08);
-      border: 1px solid rgba(0,200,255,0.2);
-      color: var(--cyan);
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    .match-confirm:hover { background: var(--cyan); color: var(--navy); }
-    .match-confirm.done {
-      background: rgba(0,230,118,0.1);
-      border-color: rgba(0,230,118,0.3);
-      color: var(--success);
-    }
-
-    /* ── BRACKET VIEW ── */
-    .bracket-container {
-      display: flex;
-      gap: 0;
-      align-items: flex-start;
-      min-width: max-content;
-      padding-bottom: 2rem;
-    }
-    .bracket-round {
-      display: flex;
-      flex-direction: column;
-      min-width: 200px;
-    }
-    .round-header {
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 0.65rem;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--cyan);
-      padding: 0.6rem 1rem;
-      border-bottom: 1px solid rgba(0,200,255,0.15);
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-    .round-matches {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .bracket-match-wrap {
-      display: flex;
-      align-items: center;
-      position: relative;
-    }
-    .bracket-match {
-      width: 180px;
-      border: 1px solid rgba(0,200,255,0.15);
-      background: var(--dark);
-      margin: 0 10px;
-      transition: border-color 0.2s;
-      cursor: pointer;
-      position: relative;
-    }
-    .bracket-match:hover { border-color: rgba(0,200,255,0.4); }
-    .bracket-match.complete { border-color: rgba(0,200,255,0.3); }
-    .bracket-slot {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.5rem 0.7rem;
-      min-height: 38px;
-      gap: 0.4rem;
-    }
-    .bracket-slot:first-child {
-      border-bottom: 1px solid rgba(0,200,255,0.08);
-    }
-    .bracket-slot-name {
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 0.8rem;
-      letter-spacing: 0.03em;
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: var(--gray);
-    }
-    .bracket-slot-name.filled { color: var(--white); }
-    .bracket-slot-name.winner { color: var(--success); }
-    .bracket-slot-score {
-      font-family: var(--font-d);
-      font-size: 1rem;
-      color: var(--cyan);
-      min-width: 22px;
-      text-align: center;
-    }
-    .bracket-slot-score.winner { color: var(--success); }
-    .bracket-seed {
-      font-family: var(--font-c);
-      font-size: 0.58rem;
-      color: var(--gray);
-      opacity: 0.6;
-      min-width: 16px;
-    }
-    .bracket-connector {
-      position: absolute;
-      right: -10px;
-      width: 10px;
-      border-top: 1px solid rgba(0,200,255,0.2);
-      top: 50%;
-    }
-
-    /* Score modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal {
-      background: var(--dark);
-      border: 1px solid rgba(0,200,255,0.2);
-      padding: 2rem;
-      min-width: 320px;
-      animation: modalIn 0.2s ease;
-    }
-    @keyframes modalIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to   { opacity: 1; transform: none; }
-    }
-    .modal-title {
-      font-family: var(--font-d);
-      font-size: 1.6rem;
-      letter-spacing: 0.06em;
-      margin-bottom: 1.5rem;
-      color: var(--white);
-    }
-    .modal-match {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .modal-team {
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 1rem;
-      text-align: center;
-    }
-    .modal-score-input {
-      width: 64px;
-      background: rgba(0,200,255,0.06);
-      border: 1px solid rgba(0,200,255,0.3);
-      color: var(--white);
-      font-family: var(--font-d);
-      font-size: 2rem;
-      text-align: center;
-      padding: 0.4rem;
-      outline: none;
-    }
-    .modal-score-input:focus { border-color: var(--cyan); }
-    .modal-vs {
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 0.75rem;
-      letter-spacing: 0.2em;
-      color: var(--gray);
-      text-align: center;
-    }
-    .modal-actions {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: flex-end;
-    }
-
-    /* Empty state */
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 4rem 2rem;
-      color: var(--gray);
-      text-align: center;
-      gap: 1rem;
-    }
-    .empty-icon {
-      font-size: 3rem;
-      opacity: 0.3;
-    }
-    .empty-title {
-      font-family: var(--font-d);
-      font-size: 2rem;
-      letter-spacing: 0.06em;
-      color: rgba(240,246,255,0.3);
-    }
-    .empty-sub {
-      font-family: var(--font-c);
-      font-size: 0.85rem;
-      letter-spacing: 0.1em;
-      max-width: 300px;
-      line-height: 1.6;
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      background: var(--cyan);
-      color: var(--navy);
-      font-family: var(--font-c);
-      font-weight: 700;
-      font-size: 0.8rem;
-      letter-spacing: 0.1em;
-      padding: 0.7rem 1.4rem;
-      z-index: 300;
-      transform: translateY(80px);
-      opacity: 0;
-      transition: all 0.3s;
-    }
-    .toast.show { transform: none; opacity: 1; }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .app { grid-template-columns: 1fr; }
-      .sidebar { border-right: none; border-bottom: 1px solid rgba(0,200,255,0.08); }
-    }
+    /* EMPTY */
+    .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;gap:1rem;color:var(--gray);text-align:center;}
+    .ei{font-size:2.5rem;opacity:.3;}
+    .et{font-family:var(--font-d);font-size:1.8rem;color:rgba(240,246,255,.25);letter-spacing:.04em;}
+    .es{font-family:var(--font-c);font-size:.82rem;letter-spacing:.08em;max-width:280px;line-height:1.6;}
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--cyan);color:var(--navy);font-family:var(--font-c);font-weight:700;font-size:.78rem;letter-spacing:.1em;padding:.65rem 1.3rem;z-index:300;transform:translateY(80px);opacity:0;transition:all .3s;}
+    .toast.show{transform:none;opacity:1;}
+    @media(max-width:768px){.app{grid-template-columns:1fr;}}
   </style>
 </head>
 <body>
 
+<!-- MODAL -->
+<div class="moverlay" id="moverlay">
+  <div class="modal">
+    <div class="mtitle" id="mtitle">Match</div>
+    <div class="msub" id="msub">Best of 3</div>
+    <div class="mcourt-row">
+      <span class="mcourt-lbl">Court:</span>
+      <select class="mcourt-sel" id="mcourtsel"></select>
+    </div>
+    <div class="msteams"><span id="mt1n">A</span><span id="mt2n">B</span></div>
+    <div class="mser" id="mser">0 — 0</div>
+    <div class="mgames" id="mgames"></div>
+    <div class="mactions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-ok" id="mconfirm" onclick="submitBracket()">Confirm Result</button>
+    </div>
+  </div>
+</div>
+
 <!-- HEADER -->
 <header>
-  <div style="display:flex;align-items:center;gap:1.2rem;">
-    <a href="index.html" style="font-family:var(--font-c);font-size:0.7rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray);text-decoration:none;display:flex;align-items:center;gap:0.4rem;border:1px solid rgba(255,255,255,0.08);padding:0.4rem 0.9rem;transition:all 0.2s;" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(0,200,255,0.35)'" onmouseout="this.style.color='var(--gray)';this.style.borderColor='rgba(255,255,255,0.08)'">← Site</a>
+  <div class="hl">
+    <a href="index.html" class="back">← Site</a>
     <div class="logo">INDY <span>BLUEFIRE</span></div>
-    <div class="header-title">Tournament Manager</div>
+    <div class="htitle">Tournament Manager</div>
   </div>
-  <div class="phase-tabs">
-    <button class="phase-tab active" onclick="switchView('pools')">Pool Play</button>
-    <button class="phase-tab" onclick="switchView('bracket')">Bracket</button>
+  <div class="tabs">
+    <button class="tab active" onclick="sv('pools')">Pool Play</button>
+    <button class="tab" onclick="sv('bracket')">Bracket</button>
   </div>
 </header>
 
-<!-- SCORE MODAL -->
-<div class="modal-overlay" id="scoreModal">
-  <div class="modal">
-    <div class="modal-title">Enter Score</div>
-    <div class="modal-match">
-      <div class="modal-team" id="modalTeam1">Team A</div>
-      <div>
-        <div class="modal-vs">VS</div>
-        <div style="display:flex;gap:0.4rem;align-items:center;margin-top:0.5rem;">
-          <input type="number" class="modal-score-input" id="modalScore1" min="0" max="99" placeholder="0"/>
-          <div class="modal-vs">—</div>
-          <input type="number" class="modal-score-input" id="modalScore2" min="0" max="99" placeholder="0"/>
-        </div>
-      </div>
-      <div class="modal-team" id="modalTeam2">Team B</div>
+<div class="app">
+<aside class="sidebar">
+  <div class="stats-bar">
+    <div class="scell"><div class="snum" id="stT">0</div><div class="slbl">Teams</div></div>
+    <div class="scell"><div class="snum" id="stP">0</div><div class="slbl">Pools</div></div>
+    <div class="scell"><div class="snum" id="stD">0</div><div class="slbl">Done</div></div>
+    <div class="scell"><div class="snum" id="stC">0</div><div class="slbl">Courts</div></div>
+  </div>
+  <div class="sb-sec"><div class="prog-wrap"><div class="prog-bar" id="prog" style="width:0%"></div></div></div>
+
+  <div class="sb-sec">
+    <div class="sb-lbl">Teams (max 100)</div>
+    <div class="ti-wrap">
+      <input class="ti" id="tiName" placeholder="Team name..." onkeydown="if(event.key==='Enter')addTeam()"/>
+      <button class="btn btn-cyan" onclick="addTeam()">Add</button>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-success" onclick="submitScore()">Confirm Score</button>
+    <div class="tlist" id="tlist"></div>
+    <button class="btn btn-out btn-full" onclick="addSamples()">+ Sample Teams</button>
+  </div>
+
+  <div class="sb-sec">
+    <div class="sb-lbl">Setup</div>
+    <div class="cfg-row"><span class="cfg-lbl">Teams per Pool</span>
+      <select class="cfg-sel" id="cfgTPP"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option></select></div>
+    <div class="cfg-row"><span class="cfg-lbl">Advance per Pool</span>
+      <select class="cfg-sel" id="cfgAdv"><option value="1">Top 1</option><option value="2" selected>Top 2</option><option value="3">Top 3</option></select></div>
+    <div class="cfg-row"><span class="cfg-lbl">Pool format</span>
+      <select class="cfg-sel" id="cfgFmt"><option value="1">Single game</option><option value="3" selected>Best of 3</option></select></div>
+    <div class="cfg-row"><span class="cfg-lbl">Score target</span>
+      <input class="cfg-num" id="cfgScore" type="number" value="25" min="5" max="99"/></div>
+    <div class="cfg-row"><span class="cfg-lbl">Win points</span>
+      <select class="cfg-sel" id="cfgWin"><option value="2" selected>2 pts</option><option value="3">3 pts</option></select></div>
+    <button class="btn btn-cyan btn-full" onclick="generate()">Generate Pools</button>
+    <button class="btn btn-out btn-full" onclick="resetAll()">Reset Everything</button>
+  </div>
+
+  <div class="sb-sec">
+    <div class="sb-lbl">Court Management</div>
+    <div class="cfg-row"><span class="cfg-lbl">Number of courts</span>
+      <input class="cfg-num" id="cfgCourts" type="number" value="4" min="1" max="20" onchange="updateCourts()"/></div>
+    <div class="cfg-row" style="margin-top:.3rem;">
+      <span class="cfg-lbl">Auto-assign courts</span>
+      <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;">
+        <input type="checkbox" id="autoAssign" checked style="accent-color:var(--cyan);width:14px;height:14px;cursor:pointer;"/>
+        <span style="font-family:var(--font-c);font-size:.75rem;color:var(--cyan);" id="autoLbl">On</span>
+      </label>
+    </div>
+    <div style="font-family:var(--font-c);font-size:.65rem;color:var(--gray);line-height:1.5;margin-bottom:.5rem;">
+      Completed matches release their court. Next queued match auto-grabs the first free court.
+    </div>
+    <div id="courtBox" class="court-box" style="display:none;"></div>
+  </div>
+</aside>
+
+<main class="main">
+  <div id="vp">
+    <div class="pgrid" id="pgrid">
+      <div class="empty"><div class="ei">🏐</div><div class="et">No Pools Yet</div><div class="es">Add teams and click Generate Pools.</div></div>
     </div>
   </div>
+  <div id="vb">
+    <div class="bouter" id="bouter">
+      <div class="empty"><div class="ei">🏆</div><div class="et">Bracket Not Ready</div><div class="es">Complete pool play first.</div></div>
+    </div>
+  </div>
+</main>
 </div>
-
-<!-- APP -->
-<div class="app">
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-
-    <!-- Stats -->
-    <div class="stats-bar" id="statsBar">
-      <div class="stat-cell">
-        <div class="stat-num" id="statTeams">0</div>
-        <div class="stat-lbl">Teams</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-num" id="statPools">0</div>
-        <div class="stat-lbl">Pools</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-num" id="statMatches">0</div>
-        <div class="stat-lbl">Matches</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-num" id="statDone">0</div>
-        <div class="stat-lbl">Complete</div>
-      </div>
-    </div>
-
-    <!-- Add Teams -->
-    <div class="sidebar-section">
-      <div class="sidebar-label">Add Teams</div>
-      <div class="team-input-wrap">
-        <input type="text" class="team-input" id="teamNameInput"
-               placeholder="Team or pair name..."
-               onkeydown="if(event.key==='Enter') addTeam()"/>
-        <button class="btn btn-cyan" onclick="addTeam()">Add</button>
-      </div>
-      <div class="team-list" id="teamList"></div>
-      <button class="btn btn-outline btn-full" onclick="addSampleTeams()" style="margin-top:0.8rem;">
-        + Load Sample Teams
-      </button>
-    </div>
-
-    <!-- Config -->
-    <div class="sidebar-section">
-      <div class="sidebar-label">Tournament Setup</div>
-      <div class="config-row">
-        <span class="config-label">Teams per Pool</span>
-        <select class="config-select" id="teamsPerPool">
-          <option value="3">3 teams</option>
-          <option value="4" selected>4 teams</option>
-          <option value="5">5 teams</option>
-          <option value="6">6 teams</option>
-        </select>
-      </div>
-      <div class="config-row">
-        <span class="config-label">Advance per Pool</span>
-        <select class="config-select" id="advancePerPool">
-          <option value="1">Top 1</option>
-          <option value="2" selected>Top 2</option>
-          <option value="3">Top 3</option>
-        </select>
-      </div>
-      <div class="config-row">
-        <span class="config-label">Points (Win)</span>
-        <select class="config-select" id="winPoints">
-          <option value="2" selected>2 pts</option>
-          <option value="3">3 pts</option>
-        </select>
-      </div>
-      <button class="btn btn-cyan btn-full" onclick="generateTournament()" style="margin-top:0.5rem;">
-        Generate Pools
-      </button>
-      <button class="btn btn-outline btn-full" onclick="resetTournament()">
-        Reset Everything
-      </button>
-    </div>
-
-  </aside>
-
-  <!-- MAIN -->
-  <main class="main">
-
-    <!-- POOL PLAY VIEW -->
-    <div id="view-pools">
-      <div class="pools-grid" id="poolsGrid">
-        <div class="empty-state">
-          <div class="empty-icon">🏐</div>
-          <div class="empty-title">No Pools Yet</div>
-          <div class="empty-sub">Add teams on the left, configure your pool size, then click Generate Pools.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- BRACKET VIEW -->
-    <div id="view-bracket">
-      <div id="bracketWrap">
-        <div class="empty-state">
-          <div class="empty-icon">🏆</div>
-          <div class="empty-title">Bracket Not Ready</div>
-          <div class="empty-sub">Complete pool play first, then the bracket will be seeded automatically from pool standings.</div>
-        </div>
-      </div>
-    </div>
-
-  </main>
-</div>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════
-let state = {
-  teams: [],
-  pools: [],        // [{name, teams:[{name,w,l,pts,ptsDiff}], matches:[{t1,t2,s1,s2,done}]}]
-  bracket: [],      // [{round, matches:[{t1,t2,s1,s2,winner,done}]}]
-  bracketReady: false,
-  currentModal: null, // {type:'pool'|'bracket', poolIdx, matchIdx, roundIdx}
-};
+const S={teams:[],pools:[],bracket:[],courts:{},modal:null,mg:[]};
+const $=id=>document.getElementById(id);
+const nC=()=>parseInt($('cfgCourts').value)||4;
+const sT=()=>parseInt($('cfgScore').value)||25;
+const wP=()=>parseInt($('cfgWin').value)||2;
+const fmt=()=>parseInt($('cfgFmt').value)||3;
+const need=()=>fmt()===3?2:1;
+const np2=n=>{let p=1;while(p<n)p*=2;return p;};
+const mkG=n=>Array.from({length:n},()=>({s1:null,s2:null,w:null}));
+const sw=(gs)=>{let w1=0,w2=0;gs.forEach(g=>{if(g.w===1)w1++;else if(g.w===2)w2++;});return{w1,w2};};
+const swinner=(gs,n)=>{const{w1,w2}=sw(gs);if(w1>=n)return 1;if(w2>=n)return 2;return null;};
 
-// ═══════════════════════════════════════
-// TEAM MANAGEMENT
-// ═══════════════════════════════════════
-function addTeam() {
-  const input = document.getElementById('teamNameInput');
-  const name = input.value.trim();
-  if (!name) return;
-  if (state.teams.find(t => t.toLowerCase() === name.toLowerCase())) {
-    showToast('Team already exists');
-    return;
+// TEAMS
+function addTeam(){
+  const i=$('tiName'),n=i.value.trim();if(!n)return;
+  if(S.teams.length>=100){toast('Max 100 teams');return;}
+  if(S.teams.find(t=>t.toLowerCase()===n.toLowerCase())){toast('Already exists');return;}
+  S.teams.push(n);i.value='';renderTeams();updateStats();
+}
+function remTeam(i){S.teams.splice(i,1);renderTeams();updateStats();}
+function addSamples(){
+  ['Sand Kings','Court Jesters','Block Party','Spike Squad','Net Ninjas','Dig Deep',
+   'Set Point','Kill Shot','Ace Patrol','Rally Cats','Top Gun','Free Agents',
+   'Bump Squad','Wrist Rockets','Sky Hooks','Iron Serves'].forEach(t=>{
+    if(S.teams.length<100&&!S.teams.includes(t))S.teams.push(t);
+  });renderTeams();updateStats();toast('Samples loaded!');
+}
+function renderTeams(){
+  $('tlist').innerHTML=S.teams.map((t,i)=>`<div class="ti2"><div><span class="tseed">#${i+1}</span><span class="ti2n">${t}</span></div><button class="btn btn-rm" onclick="remTeam(${i})">✕</button></div>`).join('');
+}
+
+// COURTS
+function updateCourts(){$('stC').textContent=nC();renderCourtBox();}
+function courtOpts(cur=''){
+  const n=nC();let o='<option value="">Unassigned</option>';
+  for(let i=1;i<=n;i++){
+    const busy=Object.values(S.courts).some(c=>c&&c.court==i&&c.court!=cur);
+    o+=`<option value="${i}"${cur==i?' selected':''}>${busy?`Court ${i} (busy)`:`Court ${i}`}</option>`;
+  }return o;
+}
+function autoOn(){return $('autoAssign')&&$('autoAssign').checked;}
+
+function nextFreeCourt(){
+  const n=nC();
+  const usedCourts=new Set(Object.values(S.courts).map(c=>c.court));
+  for(let i=1;i<=n;i++){if(!usedCourts.has(i))return i;}
+  return null; // all busy
+}
+
+// Queue: collect all unstarted matches in order (pools first, then bracket)
+function autoAssignNext(){
+  if(!autoOn())return;
+  // Try to fill any unassigned, unstarted matches up to court count
+  const n=nC();
+  // Pool matches first
+  S.pools.forEach((pool,pi)=>{
+    pool.matches.forEach((m,mi)=>{
+      if(m.done)return;
+      const key=`p${pi}m${mi}`;
+      if(S.courts[key])return; // already assigned
+      const free=nextFreeCourt();
+      if(free){assignCourt(key,free,`${m.t1} vs ${m.t2}`);}
+    });
+  });
+  // Then bracket matches
+  S.bracket.forEach((round,ri)=>{
+    round.matches.forEach((m,mi)=>{
+      if(m.done||!m.t1||!m.t2||m.t2==='BYE')return;
+      const key=`b${ri}m${mi}`;
+      if(S.courts[key])return;
+      const free=nextFreeCourt();
+      if(free){assignCourt(key,free,`${m.t1} vs ${m.t2}`);}
+    });
+  });
+}
+
+function releaseCourt(key){
+  if(S.courts[key])delete S.courts[key];
+  renderCourtBox();
+}
+
+function assignCourt(key,num,label){
+  if(S.courts[key])delete S.courts[key];
+  if(num)S.courts[key]={court:parseInt(num),label};
+  renderCourtBox();
+}
+function renderCourtBox(){
+  const n=nC(),el=$('courtBox');if(!n){el.style.display='none';return;}
+  el.style.display='block';
+  let h='';for(let i=1;i<=n;i++){
+    const e=Object.values(S.courts).find(c=>c&&c.court==i);
+    h+=`<div class="court-row"><span class="court-badge">Court ${i}</span>
+      <span style="font-family:var(--font-c);font-size:.72rem;color:${e?'var(--warn)':'var(--gray)'};max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e?e.label:'Available'}</span>
+      <span class="cdot ${e?'busy':'free'}"></span></div>`;
+  }el.innerHTML=h;
+}
+
+// GENERATE
+function generate(){
+  if(S.teams.length<4){toast('Need at least 4 teams');return;}
+  const tpp=parseInt($('cfgTPP').value);
+  const sh=[...S.teams].sort(()=>Math.random()-.5);
+  S.pools=[];const pn='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  let i=0,pi=0;
+  while(i<sh.length){
+    const chunk=sh.slice(i,i+tpp);
+    if(chunk.length>=2){
+      S.pools.push({name:`Pool ${pn[pi]||pi+1}`,
+        teams:chunk.map(n=>({name:n,w:0,l:0,pts:0,diff:0,gw:0,gl:0})),
+        matches:rrM(chunk)});
+    }i+=tpp;pi++;
   }
-  state.teams.push(name);
-  input.value = '';
-  renderTeamList();
-  updateStats();
+  S.bracketReady=false;S.bracket=[];S.courts={};
+  renderPools();autoAssignNext();renderPools();updateStats();toast(`${S.pools.length} pools generated!`);
+}
+function rrM(teams){
+  const m=[];
+  for(let i=0;i<teams.length;i++)for(let j=i+1;j<teams.length;j++)
+    m.push({t1:teams[i],t2:teams[j],games:mkG(fmt()),done:false});
+  return m;
 }
 
-function removeTeam(idx) {
-  state.teams.splice(idx, 1);
-  renderTeamList();
-  updateStats();
-}
+// POOL RENDER
+function renderPools(){
+  const grid=$('pgrid');
+  if(!S.pools.length){grid.innerHTML='<div class="empty"><div class="ei">🏐</div><div class="et">No Pools Yet</div><div class="es">Add teams and generate.</div></div>';return;}
+  const adv=parseInt($('cfgAdv').value),n=need(),f=fmt();
 
-function addSampleTeams() {
-  const samples = ['Sand Kings','Court Jesters','Block Party','Spike Squad',
-    'Net Ninjas','Dig Deep','Set Point','Kill Shot',
-    'Ace Patrol','Rally Cats','Top Gun','Free Agents'];
-  samples.forEach(t => { if (!state.teams.includes(t)) state.teams.push(t); });
-  renderTeamList();
-  updateStats();
-  showToast('Sample teams loaded!');
-}
+  grid.innerHTML=S.pools.map((pool,pi)=>{
+    const sorted=[...pool.teams].sort((a,b)=>b.pts-a.pts||b.diff-a.diff||b.gw-a.gw);
+    const stand=sorted.map((t,r)=>`<tr>
+      <td><span class="prank">${r+1}</span><span class="${r<adv?'adv':''}">${t.name}</span>${r<adv?'<span style="font-size:.55rem;color:var(--success);margin-left:2px;">▲</span>':''}</td>
+      <td class="tw">${t.w}</td><td class="tl">${t.l}</td><td class="tp">${t.pts}</td>
+      <td style="color:var(--gray);font-size:.78rem;">${t.gw}-${t.gl}</td>
+      <td style="color:var(--gray);font-size:.78rem;">${t.diff>0?'+':''}${t.diff}</td></tr>`).join('');
 
-function renderTeamList() {
-  const list = document.getElementById('teamList');
-  if (!state.teams.length) { list.innerHTML = ''; return; }
-  list.innerHTML = state.teams.map((t,i) => `
-    <div class="team-item">
-      <div>
-        <span class="team-seed">#${i+1}</span>
-        <span class="team-item-name">${t}</span>
-      </div>
-      <button class="btn btn-danger" onclick="removeTeam(${i})">✕</button>
-    </div>
-  `).join('');
-}
+    const matches=pool.matches.map((m,mi)=>{
+      const key=`p${pi}m${mi}`,ce=S.courts[key],cn=ce?ce.court:'';
+      const{w1,w2}=sw(m.games),winner=swinner(m.games,n);
+      const gcols=f===3?'repeat(3,1fr)':'1fr';
+      const games=m.games.map((g,gi)=>{
+        const prevW=gi>0?swinner(m.games.slice(0,gi),n):null;
+        const dis=m.done||(gi>0&&prevW!==null&&gi>=(gi===2?1:99));
+        const realDis=m.done||(f===1&&gi>0)||(f===3&&gi===2&&swinner(m.games.slice(0,2),n)!==null)||(f===3&&gi===1&&swinner(m.games.slice(0,1),n)!==null&&false);
+        const wlbl=g.w===1?`<div class="gwbadge" style="color:var(--success);">▲ ${m.t1}</div>`:g.w===2?`<div class="gwbadge" style="color:#ff8888;">▲ ${m.t2}</div>`:'<div class="gwbadge"></div>';
+        return `<div class="gcell"><div class="glbl">Game ${gi+1}</div>
+          <div class="gsc-row">
+            <input type="number" class="sc" value="${g.s1??''}" min="0" max="99" onchange="pgame(${pi},${mi},${gi},0,this.value)" ${m.done?'disabled':''}/>
+            <span class="scdash">—</span>
+            <input type="number" class="sc" value="${g.s2??''}" min="0" max="99" onchange="pgame(${pi},${mi},${gi},1,this.value)" ${m.done?'disabled':''}/>
+          </div>${wlbl}</div>`;
+      }).join('');
 
-// ═══════════════════════════════════════
-// TOURNAMENT GENERATION
-// ═══════════════════════════════════════
-function generateTournament() {
-  if (state.teams.length < 4) { showToast('Add at least 4 teams'); return; }
-  const tpp = parseInt(document.getElementById('teamsPerPool').value);
-
-  // Shuffle teams
-  const shuffled = [...state.teams].sort(() => Math.random() - 0.5);
-
-  // Split into pools
-  state.pools = [];
-  const poolNames = ['Pool A','Pool B','Pool C','Pool D','Pool E','Pool F','Pool G','Pool H'];
-  let i = 0, poolIdx = 0;
-  while (i < shuffled.length) {
-    const chunk = shuffled.slice(i, i + tpp);
-    if (chunk.length >= 2) {
-      state.pools.push({
-        name: poolNames[poolIdx] || `Pool ${poolIdx+1}`,
-        teams: chunk.map(name => ({ name, w:0, l:0, pts:0, ptsDiff:0 })),
-        matches: generateRoundRobin(chunk)
-      });
-    }
-    i += tpp;
-    poolIdx++;
-  }
-
-  state.bracketReady = false;
-  state.bracket = [];
-  renderPools();
-  updateStats();
-  showToast(`${state.pools.length} pools generated!`);
-}
-
-function generateRoundRobin(teams) {
-  const matches = [];
-  for (let i = 0; i < teams.length; i++) {
-    for (let j = i+1; j < teams.length; j++) {
-      matches.push({ t1: teams[i], t2: teams[j], s1: null, s2: null, done: false });
-    }
-  }
-  return matches;
-}
-
-// ═══════════════════════════════════════
-// POOL PLAY RENDERING
-// ═══════════════════════════════════════
-function renderPools() {
-  const grid = document.getElementById('poolsGrid');
-  if (!state.pools.length) {
-    grid.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">🏐</div>
-      <div class="empty-title">No Pools Yet</div>
-      <div class="empty-sub">Add teams on the left and click Generate Pools.</div>
-    </div>`;
-    return;
-  }
-
-  const advance = parseInt(document.getElementById('advancePerPool').value);
-
-  grid.innerHTML = state.pools.map((pool, pi) => {
-    // Sort teams by pts desc, then ptsDiff desc
-    const sorted = [...pool.teams].sort((a,b) => b.pts - a.pts || b.ptsDiff - a.ptsDiff);
-
-    const standings = sorted.map((t, rank) => `
-      <tr>
-        <td>
-          <span class="pool-rank">${rank+1}</span>
-          <span class="pool-team-name ${rank < advance ? 'advancing' : ''}">${t.name}</span>
-          ${rank < advance ? '<span style="font-size:0.6rem;color:var(--success);margin-left:0.3rem;">▲</span>' : ''}
-        </td>
-        <td class="td-w">${t.w}</td>
-        <td class="td-l">${t.l}</td>
-        <td class="td-pts">${t.pts}</td>
-        <td style="color:var(--gray);font-size:0.8rem;">${t.ptsDiff > 0 ? '+' : ''}${t.ptsDiff}</td>
-      </tr>
-    `).join('');
-
-    const matches = pool.matches.map((m, mi) => {
-      const w1 = m.done && m.s1 > m.s2;
-      const w2 = m.done && m.s2 > m.s1;
-      return `
-        <div class="match-row">
-          <div class="match-team ${w1 ? 'winner' : ''}">${m.t1}</div>
-          <div class="match-score-wrap">
-            <input type="number" class="score-input" value="${m.s1 ?? ''}" min="0"
-                   onchange="updatePoolScore(${pi},${mi},0,this.value)"
-                   ${m.done ? 'disabled' : ''}/>
-            <span class="score-dash">—</span>
-            <input type="number" class="score-input" value="${m.s2 ?? ''}" min="0"
-                   onchange="updatePoolScore(${pi},${mi},1,this.value)"
-                   ${m.done ? 'disabled' : ''}/>
-            <button class="match-confirm ${m.done ? 'done' : ''}"
-                    onclick="confirmPoolMatch(${pi},${mi})">
-              ${m.done ? '✓' : 'Set'}
-            </button>
+      return `<div class="mrow">
+        <div class="mrowhdr">
+          <span style="font-family:var(--font-c);font-size:.62rem;letter-spacing:.1em;color:var(--gray);">Match ${mi+1}</span>
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <select style="background:rgba(255,216,77,.06);border:1px solid rgba(255,216,77,.2);color:var(--warn);font-family:var(--font-c);font-size:.62rem;padding:.15rem .4rem;outline:none;"
+              onchange="assignCourt('${key}',this.value,'${m.t1} vs ${m.t2}');renderPools();">${courtOpts(cn)}</select>
+            ${cn?`<span class="ctag">Court ${cn}</span>`:''}
           </div>
-          <div class="match-team right ${w2 ? 'winner' : ''}">${m.t2}</div>
         </div>
-      `;
+        <div class="mteams">
+          <div class="mt ${winner===1?'win':''}">${m.t1}</div>
+          <div class="sscore">${w1} — ${w2}</div>
+          <div class="mt r ${winner===2?'win':''}">${m.t2}</div>
+        </div>
+        <div class="grows" style="grid-template-columns:${gcols};">${games}</div>
+        <div class="mfooter">
+          <span style="font-family:var(--font-c);font-size:.68rem;color:${m.done?'var(--success)':'var(--gray)'};">
+            ${m.done?`✓ ${winner===1?m.t1:m.t2} wins`:`${sT()} pts · Bo${f}`}
+          </span>
+          <button class="cfmbtn ${m.done?'done':''}" onclick="cfm(${pi},${mi})">${m.done?'✓ Undo':'Confirm'}</button>
+        </div>
+      </div>`;
     }).join('');
 
-    const allDone = pool.matches.every(m => m.done);
-
-    return `
-      <div class="pool-card">
-        <div class="pool-header">
-          <div class="pool-name">${pool.name}</div>
-          <div class="pool-record-head">W / L / PTS / +/-</div>
-        </div>
-        <table class="pool-table">
-          <thead><tr>
-            <th>Team</th><th>W</th><th>L</th><th>PTS</th><th>+/-</th>
-          </tr></thead>
-          <tbody>${standings}</tbody>
-        </table>
-        <div class="pool-matches">
-          <div class="pool-match-label">Matches</div>
-          ${matches}
-          ${allDone ? `<div style="font-family:var(--font-c);font-size:0.72rem;color:var(--success);letter-spacing:0.1em;margin-top:0.5rem;">✓ Pool Complete</div>` : ''}
-        </div>
-      </div>
-    `;
+    const allDone=pool.matches.every(m=>m.done);
+    return `<div class="pcard">
+      <div class="phdr"><div class="pname">${pool.name}</div>
+        <div style="font-family:var(--font-c);font-size:.58rem;letter-spacing:.12em;color:var(--gray);">W/L/PTS/GW-GL/+/-</div></div>
+      <table class="ptbl"><thead><tr><th>Team</th><th>W</th><th>L</th><th>PTS</th><th>Games</th><th>+/-</th></tr></thead>
+      <tbody>${stand}</tbody></table>
+      <div class="pmatches"><div class="pmlbl">Matches</div>${matches}
+        ${allDone?'<div style="font-family:var(--font-c);font-size:.7rem;color:var(--success);letter-spacing:.1em;padding-top:.3rem;">✓ Pool Complete</div>':''}</div>
+    </div>`;
   }).join('');
 
-  // Check if all pools done — offer bracket generation
-  const allPoolsDone = state.pools.length > 0 && state.pools.every(p => p.matches.every(m => m.done));
-  if (allPoolsDone && !state.bracketReady) {
-    const existing = document.getElementById('generateBracketBtn');
-    if (!existing) {
-      const btn = document.createElement('div');
-      btn.id = 'generateBracketBtn';
-      btn.style.cssText = 'grid-column:1/-1;display:flex;justify-content:center;padding:1rem 0;';
-      btn.innerHTML = `<button class="btn btn-success" style="font-size:0.9rem;padding:0.8rem 2rem;letter-spacing:0.15em;" onclick="generateBracket()">
-        🏆 Pool Play Complete — Generate Bracket
-      </button>`;
-      document.getElementById('poolsGrid').appendChild(btn);
-    }
+  const allDone=S.pools.length>0&&S.pools.every(p=>p.matches.every(m=>m.done));
+  if(allDone&&!S.bracketReady&&!$('genbtn')){
+    const d=document.createElement('div');
+    d.id='genbtn';d.style.cssText='grid-column:1/-1;display:flex;justify-content:center;padding:1.2rem 0;';
+    d.innerHTML=`<button class="btn btn-ok" style="font-size:.85rem;padding:.8rem 2.5rem;letter-spacing:.15em;" onclick="genBracket()">🏆 Pool Play Complete — Generate Bracket</button>`;
+    $('pgrid').appendChild(d);
   }
-}
-
-function updatePoolScore(pi, mi, slot, val) {
-  const match = state.pools[pi].matches[mi];
-  if (slot === 0) match.s1 = parseInt(val) || 0;
-  else match.s2 = parseInt(val) || 0;
-}
-
-function confirmPoolMatch(pi, mi) {
-  const match = state.pools[pi].matches[mi];
-  const pool = state.pools[pi];
-
-  if (match.done) {
-    // Undo
-    const t1 = pool.teams.find(t => t.name === match.t1);
-    const t2 = pool.teams.find(t => t.name === match.t2);
-    if (match.s1 > match.s2) { t1.w--; t1.pts -= parseInt(document.getElementById('winPoints').value); t2.l--; }
-    else { t2.w--; t2.pts -= parseInt(document.getElementById('winPoints').value); t1.l--; }
-    t1.ptsDiff -= (match.s1 - match.s2);
-    t2.ptsDiff -= (match.s2 - match.s1);
-    match.s1 = null; match.s2 = null; match.done = false;
-    renderPools(); updateStats(); return;
-  }
-
-  if (match.s1 === null || match.s2 === null) { showToast('Enter both scores first'); return; }
-  if (match.s1 === match.s2) { showToast('No ties allowed'); return; }
-
-  const winPts = parseInt(document.getElementById('winPoints').value);
-  const t1 = pool.teams.find(t => t.name === match.t1);
-  const t2 = pool.teams.find(t => t.name === match.t2);
-
-  if (match.s1 > match.s2) { t1.w++; t1.pts += winPts; t2.l++; }
-  else { t2.w++; t2.pts += winPts; t1.l++; }
-  t1.ptsDiff += (match.s1 - match.s2);
-  t2.ptsDiff += (match.s2 - match.s1);
-  match.done = true;
-
-  renderPools(); updateStats();
-  showToast(`${match.s1 > match.s2 ? match.t1 : match.t2} wins!`);
-}
-
-// ═══════════════════════════════════════
-// BRACKET GENERATION
-// ═══════════════════════════════════════
-function generateBracket() {
-  const advance = parseInt(document.getElementById('advancePerPool').value);
-
-  // Collect advancing teams in seed order
-  // Seed order: 1st from each pool, then 2nd from each pool, etc.
-  const seeds = [];
-  for (let rank = 0; rank < advance; rank++) {
-    state.pools.forEach(pool => {
-      const sorted = [...pool.teams].sort((a,b) => b.pts - a.pts || b.ptsDiff - a.ptsDiff);
-      if (sorted[rank]) seeds.push(sorted[rank].name);
-    });
-  }
-
-  // Pad to next power of 2
-  const size = nextPow2(seeds.length);
-  while (seeds.length < size) seeds.push('BYE');
-
-  // Build rounds
-  state.bracket = [];
-  let currentSeeds = seeds;
-
-  while (currentSeeds.length > 1) {
-    const matches = [];
-    for (let i = 0; i < currentSeeds.length; i += 2) {
-      matches.push({
-        t1: currentSeeds[i],
-        t2: currentSeeds[i+1],
-        s1: null, s2: null,
-        winner: currentSeeds[i+1] === 'BYE' ? currentSeeds[i] : null,
-        done: currentSeeds[i+1] === 'BYE'
-      });
-    }
-    const roundNum = state.bracket.length + 1;
-    const totalRounds = Math.log2(size);
-    let roundName = `Round ${roundNum}`;
-    if (matches.length === 1) roundName = 'Championship';
-    else if (matches.length === 2) roundName = 'Semifinals';
-    else if (matches.length === 4) roundName = 'Quarterfinals';
-
-    state.bracket.push({ name: roundName, matches });
-    // Next round seeds = TBD (null for non-bye matches)
-    currentSeeds = matches.map(m => m.winner || null);
-    if (currentSeeds.every(s => s === null)) break;
-  }
-
-  // Auto-advance byes
-  autoAdvanceByes();
-
-  state.bracketReady = true;
-  renderBracket();
-  switchView('bracket');
-  showToast(`Bracket seeded with ${seeds.filter(s=>s!=='BYE').length} teams!`);
-}
-
-function nextPow2(n) {
-  let p = 1;
-  while (p < n) p *= 2;
-  return p;
-}
-
-function autoAdvanceByes() {
-  state.bracket.forEach((round, ri) => {
-    round.matches.forEach((match, mi) => {
-      if (match.done && match.winner && ri + 1 < state.bracket.length) {
-        advanceWinner(ri, mi, match.winner);
-      }
-    });
-  });
-}
-
-// ═══════════════════════════════════════
-// BRACKET RENDERING
-// ═══════════════════════════════════════
-function renderBracket() {
-  const wrap = document.getElementById('bracketWrap');
-  if (!state.bracketReady || !state.bracket.length) {
-    wrap.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">🏆</div>
-      <div class="empty-title">Bracket Not Ready</div>
-      <div class="empty-sub">Complete pool play first.</div>
-    </div>`;
-    return;
-  }
-
-  const totalRounds = state.bracket.length;
-
-  // Calculate spacing so matches align vertically
-  let html = '<div class="bracket-container">';
-
-  state.bracket.forEach((round, ri) => {
-    const matchCount = round.matches.length;
-    const totalHeight = Math.pow(2, totalRounds - 1) * 90; // base height
-    const matchSpacing = totalHeight / matchCount;
-
-    html += `<div class="bracket-round">
-      <div class="round-header">${round.name}</div>
-      <div class="round-matches" style="gap:${matchSpacing - 76}px;">`;
-
-    round.matches.forEach((match, mi) => {
-      const w1 = match.done && match.winner === match.t1;
-      const w2 = match.done && match.winner === match.t2;
-      const isConnector = ri < totalRounds - 1;
-
-      html += `
-        <div class="bracket-match-wrap">
-          <div class="bracket-match ${match.done ? 'complete' : ''}"
-               onclick="openBracketModal(${ri},${mi})">
-            <div class="bracket-slot">
-              <span class="bracket-seed">${match.t1 ? getSeed(match.t1) : ''}</span>
-              <span class="bracket-slot-name ${match.t1 ? 'filled' : ''} ${w1 ? 'winner' : ''}">${match.t1 || 'TBD'}</span>
-              <span class="bracket-slot-score ${w1 ? 'winner' : ''}">${match.s1 !== null ? match.s1 : ''}</span>
-            </div>
-            <div class="bracket-slot">
-              <span class="bracket-seed">${match.t2 ? getSeed(match.t2) : ''}</span>
-              <span class="bracket-slot-name ${match.t2 ? 'filled' : ''} ${w2 ? 'winner' : ''}">${match.t2 || 'TBD'}</span>
-              <span class="bracket-slot-score ${w2 ? 'winner' : ''}">${match.s2 !== null ? match.s2 : ''}</span>
-            </div>
-          </div>
-          ${isConnector ? '<div class="bracket-connector"></div>' : ''}
-        </div>`;
-    });
-
-    html += `</div></div>`;
-  });
-
-  html += '</div>';
-  wrap.innerHTML = html;
-}
-
-function getSeed(teamName) {
-  // Find seed from original bracket order
-  for (let ri = 0; ri < state.bracket.length; ri++) {
-    const firstRound = state.bracket[0];
-    for (let mi = 0; mi < firstRound.matches.length; mi++) {
-      if (firstRound.matches[mi].t1 === teamName) return `S${mi*2+1}`;
-      if (firstRound.matches[mi].t2 === teamName) return `S${mi*2+2}`;
-    }
-  }
-  return '';
-}
-
-// ═══════════════════════════════════════
-// BRACKET SCORE MODAL
-// ═══════════════════════════════════════
-function openBracketModal(ri, mi) {
-  const match = state.bracket[ri].matches[mi];
-  if (!match.t1 || !match.t2 || match.t1 === 'TBD' || match.t2 === 'TBD') {
-    showToast('Waiting for teams to advance');
-    return;
-  }
-  if (match.done) {
-    // Allow undo
-    if (confirm(`Undo score for ${match.t1} vs ${match.t2}?`)) {
-      undoBracketMatch(ri, mi);
-    }
-    return;
-  }
-
-  state.currentModal = { type: 'bracket', roundIdx: ri, matchIdx: mi };
-  document.getElementById('modalTeam1').textContent = match.t1;
-  document.getElementById('modalTeam2').textContent = match.t2;
-  document.getElementById('modalScore1').value = '';
-  document.getElementById('modalScore2').value = '';
-  document.getElementById('scoreModal').classList.add('open');
-  setTimeout(() => document.getElementById('modalScore1').focus(), 100);
-}
-
-function closeModal() {
-  document.getElementById('scoreModal').classList.remove('open');
-  state.currentModal = null;
-}
-
-function submitScore() {
-  const s1 = parseInt(document.getElementById('modalScore1').value);
-  const s2 = parseInt(document.getElementById('modalScore2').value);
-
-  if (isNaN(s1) || isNaN(s2)) { showToast('Enter both scores'); return; }
-  if (s1 === s2) { showToast('No ties allowed'); return; }
-
-  const { roundIdx: ri, matchIdx: mi } = state.currentModal;
-  const match = state.bracket[ri].matches[mi];
-  match.s1 = s1;
-  match.s2 = s2;
-  match.winner = s1 > s2 ? match.t1 : match.t2;
-  match.done = true;
-
-  // Advance winner
-  advanceWinner(ri, mi, match.winner);
-
-  closeModal();
-  renderBracket();
   updateStats();
-  showToast(`${match.winner} advances!`);
 }
 
-function advanceWinner(ri, mi, winner) {
-  if (ri + 1 >= state.bracket.length) return;
-  const nextMatchIdx = Math.floor(mi / 2);
-  const nextSlot = mi % 2 === 0 ? 't1' : 't2';
-  const nextMatch = state.bracket[ri + 1].matches[nextMatchIdx];
-  if (nextMatch) {
-    nextMatch[nextSlot] = winner;
-    // Auto-advance if opponent is BYE
-    if (nextMatch.t1 && nextMatch.t2 === 'BYE') {
-      nextMatch.winner = nextMatch.t1; nextMatch.done = true;
-      advanceWinner(ri + 1, nextMatchIdx, nextMatch.t1);
-    } else if (nextMatch.t2 && nextMatch.t1 === 'BYE') {
-      nextMatch.winner = nextMatch.t2; nextMatch.done = true;
-      advanceWinner(ri + 1, nextMatchIdx, nextMatch.t2);
-    }
+function pgame(pi,mi,gi,slot,val){
+  const g=S.pools[pi].matches[mi].games[gi];
+  const v=parseInt(val);
+  if(slot===0)g.s1=isNaN(v)?null:v;else g.s2=isNaN(v)?null:v;
+  if(g.s1!==null&&g.s2!==null&&g.s1!==g.s2)g.w=g.s1>g.s2?1:2;else g.w=null;
+  renderPools();
+}
+
+function cfm(pi,mi){
+  const m=S.pools[pi].matches[mi],pool=S.pools[pi],n=need();
+  if(m.done){
+    // Undo
+    const winner=swinner(m.games,n);
+    const t1=pool.teams.find(t=>t.name===m.t1),t2=pool.teams.find(t=>t.name===m.t2);
+    if(winner===1){t1.w--;t1.pts-=wP();t2.l--;}else{t2.w--;t2.pts-=wP();t1.l--;}
+    m.games.forEach(g=>{
+      if(g.w===1&&g.s1!==null){t1.gw--;t2.gl--;t1.diff-=(g.s1-g.s2);t2.diff-=(g.s2-g.s1);}
+      else if(g.w===2&&g.s2!==null){t2.gw--;t1.gl--;t2.diff-=(g.s2-g.s1);t1.diff-=(g.s1-g.s2);}
+    });
+    t1.l=Math.max(0,t1.l);t2.l=Math.max(0,t2.l);
+    m.games=mkG(fmt());m.done=false;renderPools();return;
   }
-}
-
-function undoBracketMatch(ri, mi) {
-  const match = state.bracket[ri].matches[mi];
-  const winner = match.winner;
-  match.s1 = null; match.s2 = null; match.winner = null; match.done = false;
-
-  // Clear downstream
-  clearDownstream(ri, mi, winner);
-  renderBracket(); updateStats();
-  showToast('Score cleared');
-}
-
-function clearDownstream(ri, mi, teamName) {
-  if (ri + 1 >= state.bracket.length) return;
-  const nextMatchIdx = Math.floor(mi / 2);
-  const nextSlot = mi % 2 === 0 ? 't1' : 't2';
-  const nextMatch = state.bracket[ri + 1].matches[nextMatchIdx];
-  if (nextMatch && nextMatch[nextSlot] === teamName) {
-    const prevWinner = nextMatch.winner;
-    nextMatch[nextSlot] = null;
-    nextMatch.winner = null; nextMatch.done = false;
-    nextMatch.s1 = null; nextMatch.s2 = null;
-    if (prevWinner) clearDownstream(ri + 1, nextMatchIdx, prevWinner);
-  }
-}
-
-// ═══════════════════════════════════════
-// UI UTILITIES
-// ═══════════════════════════════════════
-function switchView(view) {
-  document.getElementById('view-pools').style.display = view === 'pools' ? 'block' : 'none';
-  document.getElementById('view-bracket').style.display = view === 'bracket' ? 'block' : 'none';
-  document.querySelectorAll('.phase-tab').forEach((tab, i) => {
-    tab.classList.toggle('active', (i === 0 && view === 'pools') || (i === 1 && view === 'bracket'));
+  const winner=swinner(m.games,n);
+  if(!winner){toast(`Need ${n} wins to confirm`);return;}
+  const t1=pool.teams.find(t=>t.name===m.t1),t2=pool.teams.find(t=>t.name===m.t2);
+  if(winner===1){t1.w++;t1.pts+=wP();t2.l++;}else{t2.w++;t2.pts+=wP();t1.l++;}
+  m.games.forEach(g=>{
+    if(g.w===1&&g.s1!==null){t1.gw++;t2.gl++;t1.diff+=(g.s1-g.s2);t2.diff+=(g.s2-g.s1);}
+    else if(g.w===2&&g.s2!==null){t2.gw++;t1.gl++;t2.diff+=(g.s2-g.s1);t1.diff+=(g.s1-g.s2);}
   });
-  if (view === 'bracket') renderBracket();
+  m.done=true;
+  // Release court when match completes
+  const mkey=`p${pi}m${mi}`;
+  if(autoOn())releaseCourt(mkey);
+  renderPools();autoAssignNext();renderPools();toast(`${winner===1?m.t1:m.t2} wins!`);
 }
 
-function updateStats() {
-  document.getElementById('statTeams').textContent = state.teams.length;
-  document.getElementById('statPools').textContent = state.pools.length;
-  const totalMatches = state.pools.reduce((acc, p) => acc + p.matches.length, 0) +
-    state.bracket.reduce((acc, r) => acc + r.matches.filter(m => !m.t2 || m.t2 !== 'BYE').length, 0);
-  const doneMatches = state.pools.reduce((acc, p) => acc + p.matches.filter(m => m.done).length, 0) +
-    state.bracket.reduce((acc, r) => acc + r.matches.filter(m => m.done && m.t2 !== 'BYE').length, 0);
-  document.getElementById('statMatches').textContent = totalMatches;
-  document.getElementById('statDone').textContent = doneMatches;
+// BRACKET GEN
+function genBracket(){
+  const adv=parseInt($('cfgAdv').value);
+  const seeds=[];
+  for(let r=0;r<adv;r++)S.pools.forEach(pool=>{
+    const s=[...pool.teams].sort((a,b)=>b.pts-a.pts||b.diff-a.diff||b.gw-a.gw);
+    if(s[r])seeds.push(s[r].name);
+  });
+  const size=np2(seeds.length);
+  while(seeds.length<size)seeds.push('BYE');
+  S.bracket=[];let cur=seeds;
+  while(cur.length>1){
+    const ms=[];
+    for(let i=0;i<cur.length;i+=2){
+      const bye=cur[i+1]==='BYE';
+      ms.push({t1:cur[i],t2:cur[i+1],games:mkG(3),winner:bye?cur[i]:null,done:bye});
+    }
+    const n=ms.length;
+    let rn=`Round ${S.bracket.length+1}`;
+    if(n===1)rn='Championship';else if(n===2)rn='Semifinals';else if(n===4)rn='Quarterfinals';else if(n===8)rn='Round of 16';else if(n===16)rn='Round of 32';
+    S.bracket.push({name:rn,matches:ms});
+    cur=ms.map(m=>m.winner||null);
+    if(cur.every(c=>c===null))break;
+  }
+  autoByes();S.bracketReady=true;S.courts={};
+  renderBracket();autoAssignNext();renderBracket();sv('bracket');toast(`Bracket ready! ${seeds.filter(s=>s!=='BYE').length} teams.`);
+}
+function autoByes(){S.bracket.forEach((r,ri)=>r.matches.forEach((m,mi)=>{if(m.done&&m.winner)advW(ri,mi,m.winner);}));}
+function advW(ri,mi,w){
+  if(ri+1>=S.bracket.length)return;
+  const nmi=Math.floor(mi/2),slot=mi%2===0?'t1':'t2',nm=S.bracket[ri+1].matches[nmi];
+  if(!nm)return;nm[slot]=w;
+  if(nm.t1&&nm.t2==='BYE'){nm.winner=nm.t1;nm.done=true;nm.games=mkG(3);advW(ri+1,nmi,nm.t1);}
+  else if(nm.t2&&nm.t1==='BYE'){nm.winner=nm.t2;nm.done=true;nm.games=mkG(3);advW(ri+1,nmi,nm.t2);}
 }
 
-function resetTournament() {
-  if (!confirm('Reset everything? This cannot be undone.')) return;
-  state.pools = []; state.bracket = []; state.bracketReady = false;
-  renderPools(); renderBracket(); updateStats();
-  showToast('Tournament reset');
+// BRACKET RENDER
+function renderBracket(){
+  const outer=$('bouter');
+  if(!S.bracketReady||!S.bracket.length){
+    outer.innerHTML='<div class="empty"><div class="ei">🏆</div><div class="et">Bracket Not Ready</div><div class="es">Complete pool play first.</div></div>';return;
+  }
+  const TR=S.bracket.length,FC=S.bracket[0].matches.length;
+  const BH=94,TH=FC*BH;
+  let html='';
+  S.bracket.forEach((round,ri)=>{
+    const mc=round.matches.length,sp=TH/mc,off=(sp-BH)/2;
+    html+=`<div class="bround"><div class="rhdr">${round.name}</div><div class="bmatches">`;
+    round.matches.forEach((m,mi)=>{
+      const key=`b${ri}m${mi}`,ce=S.courts[key],cn=ce?ce.court:'';
+      const{w1,w2}=sw(m.games),winner=m.winner?(m.winner===m.t1?1:2):null;
+      const badge=m.done&&winner?`${winner===1?m.t1:m.t2} wins ${Math.max(w1,w2)}-${Math.min(w1,w2)}`:(m.t1&&m.t2&&m.t1!=='TBD'&&m.t2!=='TBD'?`${w1}—${w2}`:'');
+      html+=`<div class="bmwrap" style="height:${sp}px;align-items:center;" data-ri="${ri}" data-mi="${mi}">
+        <div class="bm ${m.done?'complete':''}" id="bm-${ri}-${mi}" onclick="openModal(${ri},${mi})">
+          ${cn?`<div class="bm-court">Court ${cn}</div>`:''}
+          <div class="bs"><span class="bs-seed">${ri===0?`S${mi*2+1}`:''}</span>
+            <span class="bs-name ${m.t1&&m.t1!=='TBD'?'filled':''} ${winner===1?'winner':''}">${m.t1||'TBD'}</span>
+            <span class="bs-w ${winner===1?'winner':''}">${w1>0?w1:''}</span></div>
+          <div class="bs"><span class="bs-seed">${ri===0?`S${mi*2+2}`:''}</span>
+            <span class="bs-name ${m.t2&&m.t2!=='TBD'?'filled':''} ${winner===2?'winner':''}">${m.t2||'TBD'}</span>
+            <span class="bs-w ${winner===2?'winner':''}">${w2>0?w2:''}</span></div>
+          <div class="bmbadge">${badge}</div>
+        </div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+  // Champion
+  const champ=S.bracket[TR-1]?.matches[0]?.winner;
+  html+=`<div class="champ-wrap" style="height:${TH}px;align-items:center;">
+    <div class="champ-card" id="champcard"><div class="champ-lbl">🏆 Champion</div>
+    <div class="champ-name">${champ||'TBD'}</div></div></div>`;
+
+  outer.innerHTML=`<svg class="bsvg" id="bsvg" width="0" height="0"></svg><div class="bcontent" id="bcontent">${html}</div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(drawLines));
+  updateStats();
 }
 
-let toastTimer;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+function drawLines(){
+  const content=$('bcontent'),outer=$('bouter'),svg=$('bsvg');
+  if(!content||!svg)return;
+  const W=content.scrollWidth,H=content.scrollHeight;
+  svg.setAttribute('width',W);svg.setAttribute('height',H);
+  svg.style.width=W+'px';svg.style.height=H+'px';
+  const oR=outer.getBoundingClientRect();
+  let paths='';
+
+  S.bracket.forEach((round,ri)=>{
+    if(ri+1>=S.bracket.length)return;
+    round.matches.forEach((m,mi)=>{
+      const fe=$(`bm-${ri}-${mi}`),te=$(`bm-${ri+1}-${Math.floor(mi/2)}`);
+      if(!fe||!te)return;
+      const fr=fe.getBoundingClientRect(),tr=te.getBoundingClientRect();
+      const sx=outer.scrollLeft,sy=outer.scrollTop;
+      const x1=fr.right-oR.left+sx,y1=fr.top+fr.height/2-oR.top+sy;
+      const x2=tr.left-oR.left+sx,y2=tr.top+tr.height/2-oR.top+sy;
+      const mx=(x1+x2)/2,col=m.done?'rgba(0,230,118,.5)':'rgba(0,200,255,.22)';
+      paths+=`<path d="M${x1},${y1}H${mx}V${y2}H${x2}" fill="none" stroke="${col}" stroke-width="1.5" stroke-dasharray="${m.done?'none':'4,3'}"/>`;
+      paths+=`<circle cx="${x1}" cy="${y1}" r="3" fill="${col}"/>`;
+      paths+=`<circle cx="${x2}" cy="${y2}" r="3" fill="${col}"/>`;
+    });
+  });
+
+  // Final to champion
+  const fe=$(`bm-${S.bracket.length-1}-0`),ce=$('champcard');
+  if(fe&&ce){
+    const fr=fe.getBoundingClientRect(),cr=ce.getBoundingClientRect();
+    const sx=outer.scrollLeft,sy=outer.scrollTop;
+    const x1=fr.right-oR.left+sx,y1=fr.top+fr.height/2-oR.top+sy;
+    const x2=cr.left-oR.left+sx,y2=cr.top+cr.height/2-oR.top+sy;
+    const mx=(x1+x2)/2,won=S.bracket[S.bracket.length-1]?.matches[0]?.winner;
+    const col=won?'rgba(255,216,77,.75)':'rgba(255,216,77,.25)';
+    paths+=`<path d="M${x1},${y1}H${mx}V${y2}H${x2}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="${won?'none':'4,3'}"/>`;
+    paths+=`<circle cx="${x1}" cy="${y1}" r="4" fill="${col}"/>`;
+    paths+=`<circle cx="${x2}" cy="${y2}" r="4" fill="${col}"/>`;
+  }
+  svg.innerHTML=paths;
+  outer.onscroll=drawLines;
 }
 
-// Close modal on overlay click
-document.getElementById('scoreModal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
+// MODAL
+function openModal(ri,mi){
+  const m=S.bracket[ri].matches[mi];
+  if(!m.t1||!m.t2||m.t1==='TBD'||m.t2==='TBD'){toast('Waiting for teams');return;}
+  if(m.done){if(confirm(`Undo ${m.t1} vs ${m.t2}?`))undoB(ri,mi);return;}
+  S.modal={ri,mi};S.mg=m.games.map(g=>({...g}));
+  $('mtitle').textContent=`${m.t1} vs ${m.t2}`;
+  $('msub').textContent=`Best of 3 · First to 2 games · Target: ${sT()} pts`;
+  $('mt1n').textContent=m.t1;$('mt2n').textContent=m.t2;
+  const key=`b${ri}m${mi}`,ce=S.courts[key];
+  $('mcourtsel').innerHTML=courtOpts(ce?ce.court:'');
+  renderMGames(m.t1,m.t2);
+  $('moverlay').classList.add('open');
+}
+function renderMGames(t1,t2){
+  const{w1,w2}=sw(S.mg);
+  $('mser').textContent=`${w1} — ${w2}`;
+  const done=swinner(S.mg,2);
+  $('mconfirm').disabled=!done;$('mconfirm').style.opacity=done?'1':'.45';
+  $('mgames').innerHTML=S.mg.map((g,gi)=>{
+    const prevDone=gi>0?swinner(S.mg.slice(0,gi),2):null;
+    const dis=gi>0&&prevDone!==null;
+    return `<div class="gblock ${dis?'disabled':''} ${g.w?'decided':''}">
+      <div class="gblbl">Game ${gi+1}</div>
+      <div class="gbsc-row">
+        <input type="number" class="gbsc" value="${g.s1??''}" min="0" max="99" onchange="umg(${gi},0,this.value)" ${dis?'disabled':''}/>
+        <span class="gbvs">—</span>
+        <input type="number" class="gbsc" value="${g.s2??''}" min="0" max="99" onchange="umg(${gi},1,this.value)" ${dis?'disabled':''}/>
+      </div>
+      <div class="gbwinner" style="color:${g.w?'var(--success)':'var(--gray)'}">
+        ${g.w?(g.w===1?t1:t2)+' wins':''}
+      </div></div>`;
+  }).join('');
+}
+function umg(gi,slot,val){
+  const g=S.mg[gi],v=parseInt(val);
+  if(slot===0)g.s1=isNaN(v)?null:v;else g.s2=isNaN(v)?null:v;
+  if(g.s1!==null&&g.s2!==null&&g.s1!==g.s2)g.w=g.s1>g.s2?1:2;else g.w=null;
+  const{ri,mi}=S.modal,m=S.bracket[ri].matches[mi];
+  renderMGames(m.t1,m.t2);
+}
+function submitBracket(){
+  const{ri,mi}=S.modal,m=S.bracket[ri].matches[mi];
+  const done=swinner(S.mg,2);if(!done){toast('Series not complete');return;}
+  m.games=S.mg.map(g=>({...g}));m.winner=done===1?m.t1:m.t2;m.done=true;
+  const key=`b${ri}m${mi}`,cn=$('mcourtsel').value;
+  if(cn)assignCourt(key,cn,`${m.t1} vs ${m.t2}`);else if(S.courts[key])delete S.courts[key];
+  if(autoOn())releaseCourt(`b${ri}m${mi}`);advW(ri,mi,m.winner);closeModal();autoAssignNext();renderBracket();updateStats();toast(`${m.winner} advances!`);
+}
+function undoB(ri,mi){
+  const m=S.bracket[ri].matches[mi],prev=m.winner;
+  m.games=mkG(3);m.winner=null;m.done=false;clearD(ri,mi,prev);
+  renderBracket();updateStats();toast('Score cleared');
+}
+function clearD(ri,mi,team){
+  if(ri+1>=S.bracket.length||!team)return;
+  const nmi=Math.floor(mi/2),slot=mi%2===0?'t1':'t2',nm=S.bracket[ri+1].matches[nmi];
+  if(!nm)return;const pW=nm.winner;
+  if(nm[slot]===team){nm[slot]=null;nm.winner=null;nm.done=false;nm.games=mkG(3);if(pW)clearD(ri+1,nmi,pW);}
+}
+function closeModal(){$('moverlay').classList.remove('open');S.modal=null;}
 
-// Keyboard shortcut: Enter to submit score
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-  if (e.key === 'Enter' && state.currentModal?.type === 'bracket') submitScore();
+// UI
+function sv(v){
+  $('vp').style.display=v==='pools'?'block':'none';
+  $('vb').style.display=v==='bracket'?'block':'none';
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&v==='pools')||(i===1&&v==='bracket')));
+  if(v==='bracket')renderBracket();
+}
+function updateStats(){
+  $('stT').textContent=S.teams.length;$('stP').textContent=S.pools.length;$('stC').textContent=nC();
+  let tot=0,done=0;
+  S.pools.forEach(p=>{tot+=p.matches.length;done+=p.matches.filter(m=>m.done).length;});
+  S.bracket.forEach(r=>r.matches.forEach(m=>{if(m.t2!=='BYE'){tot++;if(m.done)done++;}}));
+  $('stD').textContent=done;
+  $('prog').style.width=(tot>0?Math.round(done/tot*100):0)+'%';
+  renderCourtBox();
+}
+function resetAll(){
+  if(!confirm('Reset everything?'))return;
+  S.pools=[];S.bracket=[];S.bracketReady=false;S.courts={};
+  renderPools();$('bouter').innerHTML='<div class="empty"><div class="ei">🏆</div><div class="et">Bracket Not Ready</div><div class="es">Complete pool play first.</div></div>';
+  updateStats();toast('Reset!');
+}
+let tT;function toast(msg){const e=$('toast');e.textContent=msg;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),2600);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&S.modal&&$('moverlay').classList.contains('open'))submitBracket();});
+$('moverlay').addEventListener('click',e=>{if(e.target===$('moverlay'))closeModal();});
+updateStats();updateCourts();
+document.getElementById('autoAssign').addEventListener('change',function(){
+  document.getElementById('autoLbl').textContent=this.checked?'On':'Off';
+  document.getElementById('autoLbl').style.color=this.checked?'var(--cyan)':'var(--gray)';
+  if(this.checked){autoAssignNext();renderPools();renderBracket();}
 });
 </script>
 </body>
