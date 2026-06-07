@@ -250,6 +250,17 @@
   </div>
 
   <div class="sb-sec">
+    <div class="sb-lbl">Save / Load</div>
+    <div id="autoSaveStatus" style="font-family:var(--font-c);font-size:.65rem;color:var(--success);letter-spacing:.1em;margin-bottom:.6rem;min-height:14px;"></div>
+    <button class="btn btn-cyan btn-full" onclick="exportJSON()">⬇ Export Tournament</button>
+    <label class="btn btn-out btn-full" style="display:block;text-align:center;cursor:pointer;margin-top:.4rem;">
+      ⬆ Import Tournament
+      <input type="file" accept=".json" style="display:none;" onchange="importJSON(event)"/>
+    </label>
+    <button class="btn btn-out btn-full" style="margin-top:.4rem;color:#ff8888;border-color:rgba(255,100,100,.2);" onclick="clearSave()">✕ Clear Saved Data</button>
+  </div>
+
+  <div class="sb-sec">
     <div class="sb-lbl">Court Management</div>
     <div class="cfg-row"><span class="cfg-lbl">Number of courts</span>
       <input class="cfg-num" id="cfgCourts" type="number" value="4" min="1" max="20" onchange="updateCourts()"/></div>
@@ -300,9 +311,9 @@ function addTeam(){
   const i=$('tiName'),n=i.value.trim();if(!n)return;
   if(S.teams.length>=100){toast('Max 100 teams');return;}
   if(S.teams.find(t=>t.toLowerCase()===n.toLowerCase())){toast('Already exists');return;}
-  S.teams.push(n);i.value='';renderTeams();updateStats();
+  S.teams.push(n);i.value='';renderTeams();updateStats();autoSave();
 }
-function remTeam(i){S.teams.splice(i,1);renderTeams();updateStats();}
+function remTeam(i){S.teams.splice(i,1);renderTeams();updateStats();autoSave();}
 function addSamples(){
   ['Sand Kings','Court Jesters','Block Party','Spike Squad','Net Ninjas','Dig Deep',
    'Set Point','Kill Shot','Ace Patrol','Rally Cats','Top Gun','Free Agents',
@@ -367,7 +378,7 @@ function releaseCourt(key){
 function assignCourt(key,num,label){
   if(S.courts[key])delete S.courts[key];
   if(num)S.courts[key]={court:parseInt(num),label};
-  renderCourtBox();
+  renderCourtBox();autoSave();
 }
 function renderCourtBox(){
   const n=nC(),el=$('courtBox');if(!n){el.style.display='none';return;}
@@ -515,7 +526,7 @@ function cfm(pi,mi){
   // Release court when match completes
   const mkey=`p${pi}m${mi}`;
   if(autoOn())releaseCourt(mkey);
-  renderPools();autoAssignNext();renderPools();toast(`${winner===1?m.t1:m.t2} wins!`);
+  renderPools();autoAssignNext();renderPools();autoSave();toast(`${winner===1?m.t1:m.t2} wins!`);
 }
 
 // BRACKET GEN
@@ -685,7 +696,7 @@ function submitBracket(){
   m.games=S.mg.map(g=>({...g}));m.winner=done===1?m.t1:m.t2;m.done=true;
   const key=`b${ri}m${mi}`,cn=$('mcourtsel').value;
   if(cn)assignCourt(key,cn,`${m.t1} vs ${m.t2}`);else if(S.courts[key])delete S.courts[key];
-  if(autoOn())releaseCourt(`b${ri}m${mi}`);advW(ri,mi,m.winner);closeModal();autoAssignNext();renderBracket();updateStats();toast(`${m.winner} advances!`);
+  if(autoOn())releaseCourt(`b${ri}m${mi}`);advW(ri,mi,m.winner);closeModal();autoAssignNext();renderBracket();updateStats();autoSave();toast(`${m.winner} advances!`);
 }
 function undoB(ri,mi){
   const m=S.bracket[ri].matches[mi],prev=m.winner;
@@ -699,6 +710,115 @@ function clearD(ri,mi,team){
   if(nm[slot]===team){nm[slot]=null;nm.winner=null;nm.done=false;nm.games=mkG(3);if(pW)clearD(ri+1,nmi,pW);}
 }
 function closeModal(){$('moverlay').classList.remove('open');S.modal=null;}
+
+// ═══════════════════════════════════
+// SAVE / LOAD
+// ═══════════════════════════════════
+const SAVE_KEY = 'indybluefire_tournament';
+
+function saveState(){
+  try {
+    const data = {
+      teams: S.teams,
+      pools: S.pools,
+      bracket: S.bracket,
+      courts: S.courts,
+      bracketReady: S.bracketReady,
+      savedAt: new Date().toISOString(),
+      cfgTPP: $('cfgTPP').value,
+      cfgAdv: $('cfgAdv').value,
+      cfgFmt: $('cfgFmt').value,
+      cfgScore: $('cfgScore').value,
+      cfgWin: $('cfgWin').value,
+      cfgCourts: $('cfgCourts').value,
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    showSaveStatus();
+  } catch(e) { console.warn('Save failed', e); }
+}
+
+function loadState(){
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    S.teams = data.teams || [];
+    S.pools = data.pools || [];
+    S.bracket = data.bracket || [];
+    S.courts = data.courts || {};
+    S.bracketReady = data.bracketReady || false;
+    // Restore config
+    if(data.cfgTPP) $('cfgTPP').value = data.cfgTPP;
+    if(data.cfgAdv) $('cfgAdv').value = data.cfgAdv;
+    if(data.cfgFmt) $('cfgFmt').value = data.cfgFmt;
+    if(data.cfgScore) $('cfgScore').value = data.cfgScore;
+    if(data.cfgWin) $('cfgWin').value = data.cfgWin;
+    if(data.cfgCourts) $('cfgCourts').value = data.cfgCourts;
+    return data.savedAt;
+  } catch(e) { console.warn('Load failed', e); return false; }
+}
+
+let saveTimer;
+function autoSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ saveState(); }, 400);
+}
+
+function showSaveStatus(){
+  const el = $('autoSaveStatus');
+  if(!el) return;
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  el.textContent = `✓ Auto-saved at ${now}`;
+  el.style.color = 'var(--success)';
+}
+
+function exportJSON(){
+  const data = {
+    teams: S.teams, pools: S.pools, bracket: S.bracket,
+    courts: S.courts, bracketReady: S.bracketReady,
+    exportedAt: new Date().toISOString(),
+    tournamentName: 'Indy Bluefire Tournament',
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `indybluefire-tournament-${date}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Tournament exported!');
+}
+
+function importJSON(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if(!data.teams) { toast('Invalid file'); return; }
+      if(!confirm(`Load tournament with ${data.teams.length} teams? This will replace current data.`)) return;
+      S.teams = data.teams || [];
+      S.pools = data.pools || [];
+      S.bracket = data.bracket || [];
+      S.courts = data.courts || {};
+      S.bracketReady = data.bracketReady || false;
+      renderTeams(); renderPools();
+      if(S.bracketReady) renderBracket();
+      updateStats(); updateCourts(); saveState();
+      toast(`Tournament loaded — ${S.teams.length} teams, ${S.pools.length} pools`);
+    } catch(err) { toast('Failed to read file'); console.error(err); }
+  };
+  reader.readAsText(file);
+  e.target.value = ''; // reset input
+}
+
+function clearSave(){
+  if(!confirm('Clear all saved data? This cannot be undone.')) return;
+  localStorage.removeItem(SAVE_KEY);
+  const el = $('autoSaveStatus');
+  if(el){ el.textContent = 'Save cleared'; el.style.color = 'var(--gray)'; }
+  toast('Saved data cleared');
+}
 
 // UI
 function sv(v){
@@ -720,11 +840,25 @@ function resetAll(){
   if(!confirm('Reset everything?'))return;
   S.pools=[];S.bracket=[];S.bracketReady=false;S.courts={};
   renderPools();$('bouter').innerHTML='<div class="empty"><div class="ei">🏆</div><div class="et">Bracket Not Ready</div><div class="es">Complete pool play first.</div></div>';
-  updateStats();toast('Reset!');
+  localStorage.removeItem(SAVE_KEY);updateStats();toast('Reset!');
 }
 let tT;function toast(msg){const e=$('toast');e.textContent=msg;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),2600);}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&S.modal&&$('moverlay').classList.contains('open'))submitBracket();});
 $('moverlay').addEventListener('click',e=>{if(e.target===$('moverlay'))closeModal();});
+// Restore saved state on load
+(function(){
+  const savedAt = loadState();
+  if(savedAt){
+    renderTeams();
+    renderPools();
+    if(S.bracketReady) renderBracket();
+    updateStats(); updateCourts();
+    const el = $('autoSaveStatus');
+    const t = new Date(savedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    if(el){ el.textContent = `✓ Restored from ${t}`; el.style.color='var(--cyan)'; }
+    toast('Tournament restored from last save');
+  }
+})();
 updateStats();updateCourts();
 document.getElementById('autoAssign').addEventListener('change',function(){
   document.getElementById('autoLbl').textContent=this.checked?'On':'Off';
