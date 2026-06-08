@@ -663,32 +663,80 @@ function confirmBracket(){
   const ranked=buildSeeds();
   const seeds=ranked.map(t=>t.name);
   const size=np2(seeds.length);
+  // Pad to next power of 2 with BYEs
   while(seeds.length<size)seeds.push('BYE');
-  S.bracket=[];let cur=seeds;
-  while(cur.length>1){
-    const ms=[];
-    for(let i=0;i<cur.length;i+=2){
-      const bye=cur[i+1]==='BYE';
-      ms.push({t1:cur[i],t2:cur[i+1],games:mkG(3),winner:bye?cur[i]:null,done:bye});
-    }
-    const n=ms.length;
-    let rn=`Round ${S.bracket.length+1}`;
-    if(n===1)rn='Championship';else if(n===2)rn='Semifinals';else if(n===4)rn='Quarterfinals';else if(n===8)rn='Round of 16';else if(n===16)rn='Round of 32';
-    S.bracket.push({name:rn,matches:ms});
-    cur=ms.map(m=>m.winner||null);
-    if(cur.every(c=>c===null))break;
+
+  // Build ALL rounds upfront based on bracket size
+  // This ensures full round structure regardless of match completion state
+  S.bracket=[];
+  const totalRounds=Math.log2(size);
+
+  // Round 1 — seed all teams
+  const r1matches=[];
+  for(let i=0;i<seeds.length;i+=2){
+    const t1=seeds[i], t2=seeds[i+1];
+    const bye=t2==='BYE';
+    const bye2=t1==='BYE';
+    r1matches.push({
+      t1, t2,
+      games:mkG(3),
+      winner: bye?t1 : bye2?t2 : null,
+      done: bye||bye2
+    });
   }
-  autoByes();S.bracketReady=true;S.courts={};
+  S.bracket.push({name:rName(r1matches.length), matches:r1matches});
+
+  // Build subsequent rounds — empty slots to be filled as winners advance
+  let prevCount=r1matches.length;
+  while(prevCount>1){
+    const nextCount=prevCount/2;
+    const ms=[];
+    for(let i=0;i<nextCount;i++){
+      ms.push({t1:null,t2:null,games:mkG(3),winner:null,done:false});
+    }
+    S.bracket.push({name:rName(nextCount), matches:ms});
+    prevCount=nextCount;
+  }
+
+  // Now advance any bye winners through the bracket
+  autoByes();
+  S.bracketReady=true;S.courts={};
   autoAssignNext();renderBracket();sv('bracket');autoSave();
   toast(`Bracket ready! ${ranked.length} teams seeded.`);
 }
-function autoByes(){S.bracket.forEach((r,ri)=>r.matches.forEach((m,mi)=>{if(m.done&&m.winner)advW(ri,mi,m.winner);}));}
+
+function rName(matchCount){
+  if(matchCount===1)return 'Championship';
+  if(matchCount===2)return 'Semifinals';
+  if(matchCount===4)return 'Quarterfinals';
+  if(matchCount===8)return 'Round of 16';
+  if(matchCount===16)return 'Round of 32';
+  if(matchCount===32)return 'Round of 64';
+  return `Round of ${matchCount*2}`;
+}
+
+function autoByes(){
+  // Walk round 1 and advance bye winners forward
+  S.bracket[0].matches.forEach((m,mi)=>{
+    if(m.done&&m.winner) advW(0,mi,m.winner);
+  });
+}
+
 function advW(ri,mi,w){
   if(ri+1>=S.bracket.length)return;
-  const nmi=Math.floor(mi/2),slot=mi%2===0?'t1':'t2',nm=S.bracket[ri+1].matches[nmi];
-  if(!nm)return;nm[slot]=w;
-  if(nm.t1&&nm.t2==='BYE'){nm.winner=nm.t1;nm.done=true;nm.games=mkG(3);advW(ri+1,nmi,nm.t1);}
-  else if(nm.t2&&nm.t1==='BYE'){nm.winner=nm.t2;nm.done=true;nm.games=mkG(3);advW(ri+1,nmi,nm.t2);}
+  const nmi=Math.floor(mi/2);
+  const slot=mi%2===0?'t1':'t2';
+  const nm=S.bracket[ri+1].matches[nmi];
+  if(!nm)return;
+  nm[slot]=w;
+  // Check if this next match now has a bye on either side
+  if(nm.t1&&nm.t2==='BYE'){
+    nm.winner=nm.t1;nm.done=true;nm.games=mkG(3);
+    advW(ri+1,nmi,nm.t1);
+  } else if(nm.t2&&nm.t1==='BYE'){
+    nm.winner=nm.t2;nm.done=true;nm.games=mkG(3);
+    advW(ri+1,nmi,nm.t2);
+  }
 }
 
 // BRACKET RENDER
@@ -711,10 +759,10 @@ function renderBracket(){
         <div class="bm ${m.done?'complete':''}" id="bm-${ri}-${mi}" onclick="openModal(${ri},${mi})">
           ${cn?`<div class="bm-court">Court ${cn}</div>`:''}
           <div class="bs"><span class="bs-seed">${ri===0?`S${mi*2+1}`:''}</span>
-            <span class="bs-name ${m.t1&&m.t1!=='TBD'?'filled':''} ${winner===1?'winner':''}">${m.t1||'TBD'}</span>
+            <span class="bs-name ${m.t1&&m.t1!=='BYE'?'filled':''} ${winner===1?'winner':''}">${m.t1&&m.t1!=='BYE'?m.t1:'TBD'}</span>
             <span class="bs-w ${winner===1?'winner':''}">${w1>0?w1:''}</span></div>
           <div class="bs"><span class="bs-seed">${ri===0?`S${mi*2+2}`:''}</span>
-            <span class="bs-name ${m.t2&&m.t2!=='TBD'?'filled':''} ${winner===2?'winner':''}">${m.t2||'TBD'}</span>
+            <span class="bs-name ${m.t2&&m.t2!=='BYE'?'filled':''} ${winner===2?'winner':''}">${m.t2&&m.t2!=='BYE'?m.t2:'TBD'}</span>
             <span class="bs-w ${winner===2?'winner':''}">${w2>0?w2:''}</span></div>
           <div class="bmbadge">${badge}</div>
         </div>
@@ -778,7 +826,7 @@ function drawLines(){
 // MODAL
 function openModal(ri,mi){
   const m=S.bracket[ri].matches[mi];
-  if(!m.t1||!m.t2||m.t1==='TBD'||m.t2==='TBD'){toast('Waiting for teams');return;}
+  if(!m.t1||!m.t2||m.t1==='BYE'||m.t2==='BYE'){toast('Waiting for teams to advance');return;}
   if(m.done){if(confirm(`Undo ${m.t1} vs ${m.t2}?`))undoB(ri,mi);return;}
   S.modal={ri,mi};S.mg=m.games.map(g=>({...g}));
   $('mtitle').textContent=`${m.t1} vs ${m.t2}`;
@@ -829,18 +877,38 @@ function submitBracket(){
   m.games=S.mg.map(g=>({...g}));m.winner=done===1?m.t1:m.t2;m.done=true;
   const key=`b${ri}m${mi}`,cn=$('mcourtsel').value;
   if(cn)assignCourt(key,cn,`${m.t1} vs ${m.t2}`);else if(S.courts[key])delete S.courts[key];
-  if(autoOn())releaseCourt(`b${ri}m${mi}`);advW(ri,mi,m.winner);closeModal();autoAssignNext();renderBracket();updateStats();autoSave();toast(`${m.winner} advances!`);
+  if(autoOn())releaseCourt(`b${ri}m${mi}`);
+  advW(ri,mi,m.winner);
+  closeModal();autoAssignNext();renderBracket();updateStats();autoSave();
+  // Check if champion
+  const lastRound=S.bracket[S.bracket.length-1];
+  if(lastRound&&lastRound.matches[0]&&lastRound.matches[0].winner){
+    toast(`🏆 ${lastRound.matches[0].winner} is the Champion!`);
+  } else {
+    toast(`${m.winner} advances!`);
+  }
 }
 function undoB(ri,mi){
   const m=S.bracket[ri].matches[mi],prev=m.winner;
-  m.games=mkG(3);m.winner=null;m.done=false;clearD(ri,mi,prev);
-  renderBracket();updateStats();toast('Score cleared');
+  m.games=mkG(3);m.winner=null;m.done=false;
+  // Don't clear done/winner if it was a bye
+  const wasBye = m.t2==='BYE'||m.t1==='BYE';
+  if(!wasBye) clearD(ri,mi,prev);
+  renderBracket();updateStats();autoSave();toast('Score cleared');
 }
 function clearD(ri,mi,team){
   if(ri+1>=S.bracket.length||!team)return;
   const nmi=Math.floor(mi/2),slot=mi%2===0?'t1':'t2',nm=S.bracket[ri+1].matches[nmi];
-  if(!nm)return;const pW=nm.winner;
-  if(nm[slot]===team){nm[slot]=null;nm.winner=null;nm.done=false;nm.games=mkG(3);if(pW)clearD(ri+1,nmi,pW);}
+  if(!nm)return;
+  const pW=nm.winner;
+  if(nm[slot]===team){
+    nm[slot]=null;
+    nm.winner=null;
+    nm.done=false;
+    nm.games=mkG(3);
+    // Also clear the other slot if it was set by bye-advance
+    if(pW) clearD(ri+1,nmi,pW);
+  }
 }
 function closeModal(){$('moverlay').classList.remove('open');S.modal=null;}
 
