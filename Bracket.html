@@ -200,6 +200,19 @@
   </div>
 </div>
 
+<!-- SEEDING PREVIEW MODAL -->
+<div class="moverlay" id="seedModal">
+  <div class="modal" style="min-width:480px;max-width:96vw;max-height:90vh;overflow-y:auto;">
+    <div class="mtitle">Bracket Seeding Preview</div>
+    <div class="msub" id="seedModalSub"></div>
+    <div id="seedList" style="display:flex;flex-direction:column;gap:2px;margin-bottom:1.5rem;"></div>
+    <div class="mactions">
+      <button class="btn btn-out" onclick="closeSeedModal()">Cancel</button>
+      <button class="btn btn-ok" onclick="confirmBracket()">Generate Bracket →</button>
+    </div>
+  </div>
+</div>
+
 <!-- HEADER -->
 <header>
   <div class="hl">
@@ -239,8 +252,15 @@
     <div class="sb-lbl">Setup</div>
     <div class="cfg-row"><span class="cfg-lbl">Teams per Pool</span>
       <select class="cfg-sel" id="cfgTPP"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option></select></div>
-    <div class="cfg-row"><span class="cfg-lbl">Advance per Pool</span>
-      <select class="cfg-sel" id="cfgAdv"><option value="1">Top 1</option><option value="2" selected>Top 2</option><option value="3">Top 3</option></select></div>
+    <div class="cfg-row">
+      <span class="cfg-lbl">Advance per Pool</span>
+      <select class="cfg-sel" id="cfgAdv" onchange="onAdvChange()">
+        <option value="1">Top 1</option>
+        <option value="2" selected>Top 2</option>
+        <option value="3">Top 3</option>
+        <option value="all">Everyone ✓</option>
+      </select>
+    </div>
     <div class="cfg-row"><span class="cfg-lbl">Pool format</span>
       <select class="cfg-sel" id="cfgFmt"><option value="1">Single game</option><option value="3" selected>Best of 3</option></select></div>
     <div class="cfg-row"><span class="cfg-lbl">Score target</span>
@@ -455,7 +475,7 @@ function rrM(teams){
 function renderPools(){
   const grid=$('pgrid');
   if(!S.pools.length){grid.innerHTML='<div class="empty"><div class="ei">🏐</div><div class="et">No Pools Yet</div><div class="es">Add teams and generate.</div></div>';return;}
-  const adv=parseInt($('cfgAdv').value),n=need(),f=fmt();
+  const adv=getAdvCount(),n=need(),f=fmt();
 
   grid.innerHTML=S.pools.map((pool,pi)=>{
     const sorted=poolSort(pool);
@@ -521,7 +541,7 @@ function renderPools(){
   if(allDone&&!S.bracketReady&&!$('genbtn')){
     const d=document.createElement('div');
     d.id='genbtn';d.style.cssText='grid-column:1/-1;display:flex;justify-content:center;padding:1.2rem 0;';
-    d.innerHTML=`<button class="btn btn-ok" style="font-size:.85rem;padding:.8rem 2.5rem;letter-spacing:.15em;" onclick="genBracket()">🏆 Pool Play Complete — Generate Bracket</button>`;
+    d.innerHTML=`<button class="btn btn-ok" style="font-size:.85rem;padding:.8rem 2.5rem;letter-spacing:.15em;" onclick="genBracket()">🏆 Pool Play Complete — Preview Seeding & Generate Bracket</button>`;
     $('pgrid').appendChild(d);
   }
   updateStats();
@@ -570,13 +590,78 @@ function cfm(pi,mi){
 }
 
 // BRACKET GEN
-function genBracket(){
-  const adv=parseInt($('cfgAdv').value);
-  const seeds=[];
-  for(let r=0;r<adv;r++)S.pools.forEach(pool=>{
-    const s=poolSort(pool);
-    if(s[r])seeds.push(s[r].name);
+function onAdvChange(){
+  // label update handled by select value
+}
+
+function getAdvCount(){
+  const v=$('cfgAdv').value;
+  if(v==='all') return parseInt($('cfgTPP').value)||4;
+  return parseInt(v)||2;
+}
+
+function buildSeeds(){
+  const isAll = $('cfgAdv').value==='all';
+  const advCount = getAdvCount();
+  const ranked=[];
+
+  if(isAll){
+    // Cross-pool: tag every team with pool rank then sort globally
+    S.pools.forEach(pool=>{
+      const sorted=poolSort(pool);
+      sorted.forEach((t,i)=>ranked.push({name:t.name,poolName:pool.name,rank:i,pts:t.pts,diff:t.diff,gw:t.gw}));
+    });
+  } else {
+    // Standard: top N per pool
+    for(let r=0;r<advCount;r++){
+      S.pools.forEach(pool=>{
+        const sorted=poolSort(pool);
+        if(sorted[r])ranked.push({name:sorted[r].name,poolName:pool.name,rank:r,pts:sorted[r].pts,diff:sorted[r].diff,gw:sorted[r].gw});
+      });
+    }
+  }
+  // Global sort: rank tier first, then pts, then diff, then game wins
+  ranked.sort((a,b)=>{
+    if(a.rank!==b.rank)return a.rank-b.rank;
+    if(b.pts!==a.pts)return b.pts-a.pts;
+    if(b.diff!==a.diff)return b.diff-a.diff;
+    return b.gw-a.gw;
   });
+  return ranked;
+}
+
+function genBracket(){
+  // Show seeding preview modal first
+  const ranked=buildSeeds();
+  const size=np2(ranked.length);
+  const byes=size-ranked.length;
+
+  $('seedModalSub').textContent=`${ranked.length} teams · ${size}-team bracket${byes>0?` · ${byes} bye${byes>1?'s':''}`:''} · Cross-pool seeding`;
+
+  $('seedList').innerHTML=ranked.map((t,i)=>`
+    <div style="display:grid;grid-template-columns:36px 1fr auto auto auto;align-items:center;gap:.5rem;
+      padding:.38rem .8rem;background:${i%2===0?'rgba(0,200,255,.04)':'rgba(0,0,0,.15)'};
+      border:1px solid rgba(0,200,255,.07);">
+      <span style="font-family:var(--font-d);font-size:1.2rem;color:var(--cyan);line-height:1;">S${i+1}</span>
+      <span style="font-family:var(--font-c);font-weight:700;font-size:.86rem;">${t.name}</span>
+      <span style="font-family:var(--font-c);font-size:.68rem;color:var(--cyan);background:var(--mid);padding:.12rem .45rem;">${t.poolName}</span>
+      <span style="font-family:var(--font-c);font-size:.68rem;color:var(--gray);">#${t.rank+1} in pool</span>
+      <span style="font-family:var(--font-c);font-size:.68rem;color:var(--success);">${t.pts}pts ${t.diff>=0?'+':''}${t.diff}</span>
+    </div>`).join('')
+  + (byes>0 ? Array.from({length:byes},(_,i)=>`
+    <div style="padding:.38rem .8rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);">
+      <span style="font-family:var(--font-c);font-size:.75rem;color:rgba(122,143,170,.4);">S${ranked.length+i+1} — BYE</span>
+    </div>`).join('') : '');
+
+  $('seedModal').classList.add('open');
+}
+
+function closeSeedModal(){$('seedModal').classList.remove('open');}
+
+function confirmBracket(){
+  closeSeedModal();
+  const ranked=buildSeeds();
+  const seeds=ranked.map(t=>t.name);
   const size=np2(seeds.length);
   while(seeds.length<size)seeds.push('BYE');
   S.bracket=[];let cur=seeds;
@@ -594,7 +679,8 @@ function genBracket(){
     if(cur.every(c=>c===null))break;
   }
   autoByes();S.bracketReady=true;S.courts={};
-  renderBracket();autoAssignNext();renderBracket();sv('bracket');toast(`Bracket ready! ${seeds.filter(s=>s!=='BYE').length} teams.`);
+  autoAssignNext();renderBracket();sv('bracket');autoSave();
+  toast(`Bracket ready! ${ranked.length} teams seeded.`);
 }
 function autoByes(){S.bracket.forEach((r,ri)=>r.matches.forEach((m,mi)=>{if(m.done&&m.winner)advW(ri,mi,m.winner);}));}
 function advW(ri,mi,w){
