@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body{margin:0;background:#030b1a;}
+canvas{display:block;}
+</style>
+</head>
+<body>
+<canvas id="c512" width="512" height="512"></canvas>
+<canvas id="c192" width="192" height="192"></canvas>
+<script>
+function drawFlame(canvas, size) {
+  const ctx = canvas.getContext('2d');
+  const s = size / 512;
+  
+  // Background
+  ctx.fillStyle = '#030b1a';
+  ctx.fillRect(0, 0, size, size);
+  
+  // Outer glow
+  const glow = ctx.createRadialGradient(size/2, size*0.6, 0, size/2, size*0.6, size*0.35);
+  glow.addColorStop(0, 'rgba(0,100,200,0.4)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, size, size);
+  
+  // Main flame gradient
+  const flameGrad = ctx.createLinearGradient(size/2, size*0.85, size/2, size*0.08);
+  flameGrad.addColorStop(0, '#001577');
+  flameGrad.addColorStop(0.25, '#0044cc');
+  flameGrad.addColorStop(0.55, '#0099ff');
+  flameGrad.addColorStop(0.78, '#66ddff');
+  flameGrad.addColorStop(1, '#ffffff');
+  
+  ctx.fillStyle = flameGrad;
+  ctx.beginPath();
+  
+  // Scale flame path
+  function p(x, y) { return [x * s, y * s]; }
+  
+  ctx.moveTo(...p(256, 40));
+  ctx.bezierCurveTo(...p(272,72), ...p(292,100), ...p(300,132));
+  ctx.bezierCurveTo(...p(320,116), ...p(316,148), ...p(308,168));
+  ctx.bezierCurveTo(...p(332,160), ...p(328,196), ...p(316,216));
+  ctx.bezierCurveTo(...p(340,216), ...p(336,252), ...p(320,268));
+  ctx.bezierCurveTo(...p(336,276), ...p(328,308), ...p(312,324));
+  ctx.bezierCurveTo(...p(328,340), ...p(316,376), ...p(300,392));
+  ctx.bezierCurveTo(...p(288,408), ...p(272,424), ...p(256,436));
+  ctx.bezierCurveTo(...p(240,424), ...p(224,408), ...p(212,392));
+  ctx.bezierCurveTo(...p(196,376), ...p(184,340), ...p(200,324));
+  ctx.bezierCurveTo(...p(184,308), ...p(176,276), ...p(192,268));
+  ctx.bezierCurveTo(...p(176,252), ...p(172,216), ...p(196,216));
+  ctx.bezierCurveTo(...p(184,196), ...p(180,160), ...p(204,168));
+  ctx.bezierCurveTo(...p(192,148), ...p(188,116), ...p(208,132));
+  ctx.bezierCurveTo(...p(216,100), ...p(240,72), ...p(256,40));
+  ctx.closePath();
+  ctx.fill();
+  
+  // Inner core
+  const coreGrad = ctx.createLinearGradient(size/2, size*0.7, size/2, size*0.15);
+  coreGrad.addColorStop(0, 'rgba(0,85,238,0)');
+  coreGrad.addColorStop(0.5, 'rgba(68,204,255,0.5)');
+  coreGrad.addColorStop(1, 'rgba(255,255,255,0.8)');
+  
+  ctx.fillStyle = coreGrad;
+  ctx.beginPath();
+  ctx.moveTo(...p(256,80));
+  ctx.bezierCurveTo(...p(262,108), ...p(270,136), ...p(272,164));
+  ctx.bezierCurveTo(...p(274,192), ...p(270,224), ...p(264,256));
+  ctx.bezierCurveTo(...p(260,288), ...p(256,320), ...p(256,360));
+  ctx.bezierCurveTo(...p(252,320), ...p(248,288), ...p(244,256));
+  ctx.bezierCurveTo(...p(238,224), ...p(234,192), ...p(236,164));
+  ctx.bezierCurveTo(...p(238,136), ...p(246,108), ...p(256,80));
+  ctx.closePath();
+  ctx.fill();
+  
+  // White hot tip
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.beginPath();
+  ctx.ellipse(size/2, 52*s, 16*s, 22*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  
+  ctx.fillStyle = 'white';
+  ctx.beginPath();
+  ctx.ellipse(size/2, 46*s, 8*s, 12*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  
+  // "IB" text at bottom
+  ctx.fillStyle = 'rgba(0,200,255,0.8)';
+  ctx.font = `bold ${Math.round(60*s)}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = `${4*s}px`;
+  ctx.fillText('IB', size/2, size*0.95);
+}
+
+const c512 = document.getElementById('c512');
+const c192 = document.getElementById('c192');
+drawFlame(c512, 512);
+drawFlame(c192, 192);
+
+// Auto download both
+function download(canvas, name) {
+  const a = document.createElement('a');
+  a.download = name;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+setTimeout(() => {
+  download(c512, 'icon-512.png');
+  setTimeout(() => download(c192, 'icon-192.png'), 500);
+}, 500);
+</script>
+</body>
+</html>
