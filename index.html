@@ -73,7 +73,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1.2rem 4rem;
+      padding: 0.9rem 3rem;
       background: linear-gradient(to bottom, rgba(3,11,26,0.98), transparent);
       transition: background 0.3s;
     }
@@ -93,6 +93,77 @@
       display: flex;
       gap: 2.5rem;
       list-style: none;
+    }
+
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 0.3rem;
+      background: none;
+      border: none;
+    }
+    .hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--white);
+      transition: all 0.3s;
+    }
+    .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+    /* Mobile dropdown menu */
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 53px; left: 0; right: 0;
+      background: rgba(3,11,26,0.98);
+      border-bottom: 1px solid rgba(0,200,255,0.12);
+      padding: 1rem 2rem 1.5rem;
+      flex-direction: column;
+      z-index: 99;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      font-family: var(--font-cond);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+      text-decoration: none;
+      padding: 0.9rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: color 0.2s;
+    }
+    .mobile-menu a:last-of-type { border-bottom: none; }
+    .mobile-menu a:hover { color: var(--fire-core); }
+    .mobile-menu .mobile-bracket { color: var(--fire-core); margin-top: 0.3rem; }
+    .mobile-install {
+      margin-top: 1rem;
+      font-family: var(--font-cond);
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.8rem;
+      background: rgba(0,200,255,0.08);
+      border: 1px solid rgba(0,200,255,0.2);
+      color: var(--fire-core);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mobile-install:hover { background: var(--fire-core); color: var(--navy); }
+
+    @media (max-width: 900px) {
+      nav { padding: 0.9rem 1.5rem; }
+      .nav-links { display: none !important; }
+      .install-btn { display: none !important; }
+      .hamburger { display: flex; }
     }
     .nav-links a {
       font-family: var(--font-cond);
@@ -845,10 +916,7 @@
     }
 
     /* ── RESPONSIVE ── */
-    @media (max-width: 900px) {
-      nav { padding: 1rem 2rem; }
-      .nav-links { display: none; }
-      section, #events, #formats, #divisions { padding: 5rem 2rem; }
+
       #about, #contact { grid-template-columns: 1fr; gap: 3rem; }
       .formats-grid { grid-template-columns: 1fr; }
       .form-row { grid-template-columns: 1fr; }
@@ -872,12 +940,25 @@
       <li><a href="#formats">Formats</a></li>
       <li><a href="#divisions">Divisions</a></li>
       <li><a href="#contact">Contact</a></li>
+      <li><a href="Bracket.html">Bracket</a></li>
     </ul>
-    <div style="display:flex;align-items:center;gap:0.8rem;">
-      <a href="Bracket.html" class="install-btn" style="text-decoration:none;">🏆 Bracket</a>
-      <button class="install-btn" id="installNavBtn" onclick="openInstallModal()">⬇ App</button>
-    </div>
+    <button class="install-btn" id="installNavBtn" onclick="openInstallModal()"
+            style="padding:0.4rem 0.7rem;font-size:0.65rem;">⬇ App</button>
+    <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#about" onclick="closeMobileMenu()">About</a>
+    <a href="#events" onclick="closeMobileMenu()">Events</a>
+    <a href="#formats" onclick="closeMobileMenu()">Formats</a>
+    <a href="#divisions" onclick="closeMobileMenu()">Divisions</a>
+    <a href="#contact" onclick="closeMobileMenu()">Contact</a>
+    <a href="Bracket.html" class="mobile-bracket">🏆 Tournament Bracket</a>
+    <button class="mobile-install" onclick="closeMobileMenu();openInstallModal();">⬇ Install App</button>
+  </div>
 
   <!-- INSTALL MODAL -->
   <div class="install-modal-overlay" id="installModal">
@@ -1269,6 +1350,20 @@
   </div>
 
   <script>
+    // Mobile menu
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobileMenu');
+      const burger = document.getElementById('hamburger');
+      menu.classList.toggle('open');
+      burger.classList.toggle('open');
+    }
+    function closeMobileMenu() {
+      document.getElementById('mobileMenu').classList.remove('open');
+      document.getElementById('hamburger').classList.remove('open');
+    }
+    // Close mobile menu on scroll
+    window.addEventListener('scroll', () => { closeMobileMenu(); });
+
     // Nav scroll effect
     const navbar = document.getElementById('navbar');
     window.addEventListener('scroll', () => {
