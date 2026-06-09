@@ -4,6 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Indy Bluefire Volleyball</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#00c8ff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Indy Bluefire" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+  <!-- SEO -->
+  <meta name="description" content="Indianapolis indoor & sand volleyball tournaments. All levels. One community. Earn it." />
+  <meta name="keywords" content="Indianapolis volleyball, Indy volleyball, sand volleyball, indoor volleyball, tournaments" />
+  <meta property="og:title" content="Indy Bluefire Volleyball" />
+  <meta property="og:description" content="Indianapolis volleyball tournaments — sand & indoor. All levels. One community." />
+  <meta property="og:image" content="/icons/icon-512.png" />
+  <meta property="og:url" content="https://indybluefire.com" />
+  <meta name="twitter:card" content="summary_large_image" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@400;700;900&display=swap" rel="stylesheet" />
   <style>
@@ -714,7 +732,7 @@
 
     <p class="hero-eyebrow">Indianapolis Volleyball &mdash; Est. 2025</p>
     <h1 class="hero-title">INDY<br><span class="blue">BLUEFIRE</span></h1>
-    <p class="hero-subtitle">Sand volleyball tournaments built for competitors who earn it. All levels. One community.</p>
+    <p class="hero-subtitle">Indoor &amp; sand volleyball tournaments built for competitors who earn it. All levels. One community.</p>
     <div class="hero-cta-group">
       <a href="#events" class="btn-primary">View Events</a>
       <a href="Bracket.html" class="btn-secondary">🏆 Tournament Bracket</a>
@@ -733,16 +751,15 @@
     <div class="about-text reveal">
       <p class="section-label">Who We Are</p>
       <h2 class="section-title">Built in Indiana.<br>Burned into the Game.</h2>
-      <p>Indy Bluefire is Indianapolis's premier adult volleyball tournament organization — running competitive one-day events on sand courts, year-round, for players of every level.</p>
+      <p>Indy Bluefire is Indianapolis's premier adult volleyball tournament organization — running competitive one-day events on both sand and hard court, year-round, for players of every level.</p>
       <p>We believe the best days on the court are the ones you earned. Our events are designed to challenge you, connect you, and bring you back every single time.</p>
-      <p>Beginner or elite. Solo or squad. You belong here.</p>
-      <p>Indoor & Grass Tournaments are coming soon. Stay tuned.</p>
+      <p>Sand or court. Beginner or elite. Solo or squad. You belong here.</p>
       <a href="#contact" class="btn-primary" style="margin-top:1.5rem; display:inline-block;">Join the Community</a>
     </div>
     <div class="about-stats reveal">
       <div class="stat-box">
-        <div class="stat-num">1</div>
-        <div class="stat-label">Surface</div>
+        <div class="stat-num">2</div>
+        <div class="stat-label">Surfaces</div>
       </div>
       <div class="stat-box">
         <div class="stat-num">5</div>
@@ -932,9 +949,9 @@
       <h2 class="section-title">Stay in the Loop</h2>
       <p>Events, announcements, and registration drops go to our community first. Drop your info and we'll keep you posted on everything Indy Bluefire.</p>
       <div class="contact-links">
-        <a href="mailto:tommy@indybluefire.com" class="contact-link">
+        <a href="mailto:hello@indybluefire.com" class="contact-link">
           <div class="contact-link-icon">✉</div>
-          tommy@indybluefire.com
+          hello@indybluefire.com
         </a>
         <a href="https://www.instagram.com/indybluefire/" class="contact-link" target="_blank" rel="noopener">
           <div class="contact-link-icon">📸</div>
@@ -1006,6 +1023,25 @@
     <p class="footer-copy">&copy; 2025 Indy Bluefire Volleyball &mdash; Indianapolis, IN</p>
   </footer>
 
+  <!-- PWA Install Banner -->
+  <div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;
+    background:linear-gradient(135deg,#050d1e,#0a1f4e);
+    border-top:1px solid rgba(0,200,255,.25);
+    padding:1rem 1.5rem;
+    display:none;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <img src="/icons/icon.svg" width="40" height="40" style="border-radius:8px;"/>
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.08em;color:#f0f6ff;">Install Indy Bluefire</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.1em;color:#7a8faa;">Add to home screen for quick access</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;">
+      <button onclick="installPWA()" style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;padding:.55rem 1.3rem;background:#00c8ff;color:#030b1a;border:none;cursor:pointer;">Install</button>
+      <button onclick="dismissInstall()" style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;padding:.55rem 1rem;background:transparent;color:#7a8faa;border:1px solid rgba(255,255,255,.1);cursor:pointer;">Not Now</button>
+    </div>
+  </div>
+
   <script>
     // Nav scroll effect
     const navbar = document.getElementById('navbar');
@@ -1038,6 +1074,52 @@
         fields.forEach(f => f.value = '');
       }
     }
+  </script>
+  <script>
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('[PWA] Service worker registered:', reg.scope))
+          .catch(err => console.warn('[PWA] Service worker failed:', err));
+      });
+    }
+
+    // PWA Install prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Show install banner after 10 seconds if not already installed
+      setTimeout(() => {
+        if (deferredPrompt) showInstallBanner();
+      }, 10000);
+    });
+
+    function showInstallBanner() {
+      const banner = document.getElementById('installBanner');
+      if (banner) banner.style.display = 'flex';
+    }
+
+    function installPWA() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(result => {
+        if (result.outcome === 'accepted') {
+          document.getElementById('installBanner').style.display = 'none';
+        }
+        deferredPrompt = null;
+      });
+    }
+
+    function dismissInstall() {
+      document.getElementById('installBanner').style.display = 'none';
+      deferredPrompt = null;
+    }
+
+    window.addEventListener('appinstalled', () => {
+      document.getElementById('installBanner').style.display = 'none';
+    });
   </script>
 </body>
 </html>
