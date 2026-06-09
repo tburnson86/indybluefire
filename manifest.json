@@ -1,0 +1,57 @@
+{
+  "name": "Indy Bluefire Volleyball",
+  "short_name": "Indy Bluefire",
+  "description": "Indianapolis indoor & sand volleyball tournaments. All levels. One community.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#030b1a",
+  "theme_color": "#00c8ff",
+  "categories": ["sports", "entertainment"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Indy Bluefire Volleyball"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tournament Bracket",
+      "short_name": "Bracket",
+      "description": "View and manage tournament brackets",
+      "url": "/Bracket.html",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Events",
+      "short_name": "Events",
+      "description": "View upcoming tournaments",
+      "url": "/#events",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
