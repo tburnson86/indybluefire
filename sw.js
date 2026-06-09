@@ -12,9 +12,7 @@ const STATIC_ASSETS = [
   '/index.html',
   '/Bracket.html',
   '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/icon.svg',
+  '/BluefireLogo.png',
   'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&display=swap',
 ];
 
