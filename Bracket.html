@@ -4,6 +4,11 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Indy Bluefire — Tournament Manager</title>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#00c8ff"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="Indy Bluefire"/>
+  <link rel="apple-touch-icon" href="/icons/icon-192.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
     :root {
@@ -1254,5 +1259,14 @@ document.getElementById('autoAssign').addEventListener('change',function(){
   if(this.checked){autoAssignNext();renderPools();renderBracket();}
 });
 </script>
+  <script>
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',()=>{
+        navigator.serviceWorker.register('/sw.js')
+          .then(r=>console.log('[PWA] SW registered'))
+          .catch(e=>console.warn('[PWA] SW failed',e));
+      });
+    }
+  </script>
 </body>
 </html>
