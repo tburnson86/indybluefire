@@ -11,7 +11,7 @@
   "categories": ["sports", "entertainment"],
   "icons": [
     {
-      "src": "/BluefireLogo.png",
+      "src": "/IndyBluefire_Logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -19,7 +19,7 @@
   ],
   "screenshots": [
     {
-      "src": "/BluefireLogo.png",
+      "src": "/IndyBluefire_Logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "narrow",
@@ -32,14 +32,14 @@
       "short_name": "Bracket",
       "description": "View and manage tournament brackets",
       "url": "/Bracket.html",
-      "icons": [{ "src": "/BluefireLogo.png", "sizes": "512x512" }]
+      "icons": [{ "src": "/IndyBluefire_Logo.png", "sizes": "512x512" }]
     },
     {
       "name": "Events",
       "short_name": "Events",
       "description": "View upcoming tournaments",
       "url": "/#events",
-      "icons": [{ "src": "/BluefireLogo.png", "sizes": "512x512" }]
+      "icons": [{ "src": "/IndyBluefire_Logo.png", "sizes": "512x512" }]
     }
   ]
 }
