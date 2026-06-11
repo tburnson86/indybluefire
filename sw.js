@@ -1,27 +1,27 @@
 // ═══════════════════════════════════════════════════
 // Indy Bluefire — Service Worker
-// ─────────────────────────────────────────────────
-// HOW TO FORCE UPDATE FOR ALL USERS:
-// Bump CACHE_VERSION by 1 every time you push changes.
-// e.g. '1.0.1' → '1.0.2' → '1.0.3'
+// Handles caching for offline support
 // ═══════════════════════════════════════════════════
 
-const CACHE_VERSION = '1.0.1';
-const CACHE_NAME = `indybluefire-v${CACHE_VERSION}`;
+const CACHE_NAME = 'indybluefire-v1';
+const CACHE_VERSION = '1.0.0';
 
+// Files to cache for offline use
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/Bracket.html',
   '/manifest.json',
-  '/BluefireLogo.png',
+  '/IndyBluefire_Logo.png',
   'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&display=swap',
 ];
 
+// ── INSTALL — cache all static assets
 self.addEventListener('install', event => {
-  console.log(`[SW] Installing v${CACHE_VERSION}`);
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
+      console.log('[SW] Caching static assets');
+      // Cache what we can, ignore failures (e.g. fonts if offline during install)
       return Promise.allSettled(
         STATIC_ASSETS.map(url =>
           cache.add(url).catch(err => console.warn('[SW] Failed to cache:', url, err))
@@ -31,64 +31,84 @@ self.addEventListener('install', event => {
   );
 });
 
+// ── ACTIVATE — clean up old caches
 self.addEventListener('activate', event => {
-  console.log(`[SW] Activating v${CACHE_VERSION}`);
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => {
-          console.log('[SW] Deleting old cache:', key);
-          return caches.delete(key);
-        })
+        keys
+          .filter(key => key !== CACHE_NAME)
+          .map(key => {
+            console.log('[SW] Deleting old cache:', key);
+            return caches.delete(key);
+          })
       )
     ).then(() => self.clients.claim())
-     .then(() => {
-       self.clients.matchAll({ type: 'window' }).then(clients => {
-         clients.forEach(client =>
-           client.postMessage({ type: 'SW_UPDATED', version: CACHE_VERSION })
-         );
-       });
-     })
   );
 });
 
+// ── FETCH — serve from cache, fall back to network
 self.addEventListener('fetch', event => {
+  // Skip non-GET requests
   if (event.request.method !== 'GET') return;
+
+  // Skip browser extension requests
   if (!event.request.url.startsWith('http')) return;
+
   event.respondWith(
     caches.match(event.request).then(cached => {
-      const fetchPromise = fetch(event.request)
-        .then(response => {
-          if (response && response.status === 200 && response.type !== 'opaque') {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          }
+      if (cached) {
+        // Serve from cache, but also update cache in background (stale-while-revalidate)
+        const fetchPromise = fetch(event.request)
+          .then(response => {
+            if (response && response.status === 200) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+            }
+            return response;
+          })
+          .catch(() => cached); // If network fails, just use cache
+        return cached;
+      }
+
+      // Not in cache — fetch from network and cache it
+      return fetch(event.request).then(response => {
+        if (!response || response.status !== 200 || response.type === 'opaque') {
           return response;
-        })
-        .catch(() => cached);
-      return cached || fetchPromise;
+        }
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return response;
+      }).catch(() => {
+        // Offline fallback for navigation requests
+        if (event.request.mode === 'navigate') {
+          return caches.match('/index.html');
+        }
+      });
     })
   );
 });
 
+// ── PUSH NOTIFICATIONS (ready for future use)
 self.addEventListener('push', event => {
   if (!event.data) return;
   const data = event.data.json();
   event.waitUntil(
     self.registration.showNotification(data.title || 'Indy Bluefire', {
       body: data.body || 'New tournament update!',
-      icon: '/BluefireLogo.png',
-      badge: '/BluefireLogo.png',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
       vibrate: [100, 50, 100],
       data: { url: data.url || '/' },
       actions: [
-        { action: 'view', title: 'View' },
+        { action: 'view', title: 'View', icon: '/icons/icon-192.png' },
         { action: 'dismiss', title: 'Dismiss' }
       ]
     })
   );
 });
 
+// Handle notification clicks
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   if (event.action === 'dismiss') return;
