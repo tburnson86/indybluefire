@@ -403,22 +403,38 @@ function nextFreeCourt(){
   return null; // all busy
 }
 
-// Queue: collect all unstarted matches in order (pools first, then bracket)
+// Queue: interleave matches across pools (round-robin) before going deep into any pool
+// Court 1 → Pool A Match 1, Court 2 → Pool B Match 1, Court 3 → Pool C Match 1...
+// Then when a court frees up it goes to the next unplayed match across ALL pools
 function autoAssignNext(){
   if(!autoOn())return;
-  // Try to fill any unassigned, unstarted matches up to court count
-  const n=nC();
-  // Pool matches first
-  S.pools.forEach((pool,pi)=>{
-    pool.matches.forEach((m,mi)=>{
-      if(m.done)return;
-      const key=`p${pi}m${mi}`;
-      if(S.courts[key])return; // already assigned
-      const free=nextFreeCourt();
-      if(free){assignCourt(key,free,`${m.t1} vs ${m.t2}`);}
+
+  // Build an interleaved queue of unplayed pool matches
+  // Round 1 of all pools, then Round 2 of all pools, etc.
+  const queue = []; // [{key, label}]
+
+  // Find max number of matches in any pool
+  const maxMatches = Math.max(...S.pools.map(p => p.matches.length), 0);
+
+  // Interleave: match index 0 from all pools, then match index 1, etc.
+  for(let mi = 0; mi < maxMatches; mi++){
+    S.pools.forEach((pool, pi) => {
+      const m = pool.matches[mi];
+      if(!m) return;
+      if(m.done) return;
+      const key = `p${pi}m${mi}`;
+      if(S.courts[key]) return; // already assigned
+      queue.push({key, label:`${m.t1} vs ${m.t2}`});
     });
+  }
+
+  // Assign courts to queued matches in order
+  queue.forEach(({key, label}) => {
+    const free = nextFreeCourt();
+    if(free) assignCourt(key, free, label);
   });
-  // Then bracket matches
+
+  // Then fill any available bracket matches
   S.bracket.forEach((round,ri)=>{
     round.matches.forEach((m,mi)=>{
       if(m.done||!m.t1||!m.t2||m.t2==='BYE')return;
