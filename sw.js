@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════
 
 const CACHE_NAME = 'indybluefire-v1';
-const CACHE_VERSION = '1.0.2';
+const CACHE_VERSION = '1.0.3';
 
 // Files to cache for offline use
 const STATIC_ASSETS = [
